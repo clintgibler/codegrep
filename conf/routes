@@ -1,0 +1,28 @@
+# Routes
+# Order is important - by controller.
+
+GET     /                           controllers.Assets.at(path="/public", file="/index.html")
+GET     /index.html                 controllers.Assets.at(path="/public", file="/index.html")
+GET     /about                      controllers.Assets.at(path="/public", file="/index.html")
+GET     /detail                     controllers.Assets.at(path="/public", file="/index.html")
+GET     /search                     controllers.Assets.at(path="/public", file="/index.html")
+GET     /dist/bundle.js             controllers.Assets.at(path="/public/dist", file="/bundle.js")
+GET     /dist/bundle.js.map         controllers.Assets.at(path="/public/dist", file="/bundle.js.map")
+GET     /dist/main.css              controllers.Assets.at(path="/public/dist", file="/main.css")
+GET     /dist/logo.svg              controllers.Assets.at(path="/public/dist", file="/logo.svg")
+
+GET      /api/version               controllers.VersionController.version
+
+
+GET      /api/languages             controllers.SearchController.languages
+GET      /api/search                controllers.SearchController.search
+GET      /api/identifiers           controllers.SearchController.identifiers(language: String = "")
+GET      /api/identifiers/:language controllers.SearchController.identifiers(language: String)
+
+GET      /api/document/:id          controllers.DocumentController.document(id: String)
+
+POST     /api/index                 controllers.IndexController.index
+
+#GET      /api/repository            controllers.RepositoryController.list
+#POST     /api/repository/add        controllers.RepositoryController.add
+#POST     /api/repository/delete     controllers.RepositoryController.delete

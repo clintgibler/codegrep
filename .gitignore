@@ -1,5 +1,11 @@
-.classpath
-.project
-.settings
-target/
-.vscode
+logs
+target
+frontend-dev/elm-stuff
+frontend-dev/node_modules
+.g8
+/.idea
+/.idea_modules
+/.classpath
+/.project
+/.settings
+/RUNNING_PID
