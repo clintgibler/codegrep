@@ -1,0 +1,19 @@
+#!/bin/bash
+
+codesearch=$PWD
+repolist=${REPOLIST:=sources.txt}
+sourcedir="/data/sources/github.com"
+for i in $(cat $repolist)
+do
+  org=$(echo $i | perl -lan -F'\/' -e 'print $F[3]')
+  repo=$(basename $(echo $i | perl -lan -F'\/' -e 'print $F[4]') .git)
+  if [[ ! -d "$sourcedir/$org" ]];then
+    mkdir -p $sourcedir/$org
+  fi
+  cd $sourcedir/$org || exit 1
+  if [[ ! -d $repo ]];then
+    git clone --depth 1 $i
+  else
+    cd $repo && git pull origin master
+  fi
+done

@@ -1,17 +1,17 @@
-<div id="details-header" flex layout="row"  md-colors="{background: 'primary-600-0.9'}">
-	<small>
-	    <span><strong>language:</strong></span>
-        <span>{{ hit._source.language }}</span>
-	    <span><strong>filename:</strong></span>
-        <span>{{ hit._source.filename }}</span>
-	    <span><strong>repository:</strong></span>
-        <a ng-href="hit._source.repository">{{ hit._source.repository }}</a>
-		<span flex></span>
-	</small>
+<div flex layout="row" ng-if="!loading">
+	<div flex="100" id="details-source-code" md-colors="{background: 'primary-50-0.05'}">
+		<div id="details-header" flex layout="row" md-colors="{background: 'primary-50-0.5'}">
+			<md-button ng-href="/search?repository={{ hit._source.repository }}" class="md-raised md-primary">{{ hit._source.repository | shorten }}</md-button>
+			<span flex></span>
+			<md-button ng-href="{{ getURL(hit._source.repository, hit._source.filename) }}" class="md-raised md-primary"> Source </md-button>
+		</div>
+		<div flex layout="column" layout-padding>
+			<source-code hit="hit"></source-code>
+		</div>
+	</div>
 </div>
 
-<div flex layout="row">
-	<div flex id="details-source-code" md-colors="{background: 'primary-50'}">
-    	<source-code ng-if="!loading" hit="hit"></source-code>
-	</div>
+<div ng-if="loading">
+	<p>Loading</p>
+	<md-progress-linear md-mode="indeterminate"></md-progress-linear>
 </div>

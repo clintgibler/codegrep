@@ -27,12 +27,11 @@
   text-decoration: none;
 }
 
-#search-container md-input-container {
-  margin-bottom: 0px;
-}
-
 #search-container md-input-container .md-errors-spacer {
   min-height: 15px;
+}
+#search-container-submit > button {
+  margin-left: 0px;
 }
 
 
@@ -125,36 +124,96 @@ em {
    transition: none !important;
 }
 .token {
-  color: #0288D1;
+  color: inherit;
   cursor: pointer;
   outline: none;
   font-family: Consolas, monospace;
   font-size: small;
-  border-bottom: dashed;
-  border-bottom-width: 1px;
   text-decoration:none;
-
 }
+
+.token-go-import {
+  color: #2196F3;
+}
+
+.token-go-variable {
+  color: #E91E63;
+}
+.token-go-method {
+  color: #E91E63;
+}
+.token-go-function {
+  color: #E91E63;
+}
+.token-go-type {
+  color: #E91E63;
+}
+.token-go-field {
+  color: #4CAF50
+}
+.token-go-identifier {
+  color: #78909C;
+}
+
+
+.token-java-import {
+  color: #E91E63;
+}
+
+.token-java-variable {
+  color: #E91E63;
+}
+.token-java-method {
+  color: #E91E63;
+}
+.token-java-annotation {
+  color: #E91E63;
+}
+.token-java-annotationtype {
+  color: #E91E63;
+}
+.token-java-field {
+  color: #4CAF50
+}
+.token-java-identifier {
+  color: #78909C;
+}
+
 .non-token {
   font-family: Consolas, monospace;
   font-size: small;
   white-space: pre;
 }
 
-#details-header {
-  padding: 20px;
-}
-
-#details-header a {
-  color: inherit;
+#details-header .md-button {
+  text-transform: none; 
 }
 
 #details-source-code {
-  padding: 20px;
   overflow: scroll;
 }
 
 pre {
   font-family: Consolas, monospace;
+  font-size: small;
+}
+
+#token-header {
+  margin-bottom: 12px;
+}
+
+.hljs {
+  font-family: Consolas, monospace;
+}
+
+#token-header a{
+  text-decoration: none;
+}
+
+#search-container a{
+  text-decoration: none;
+}
+
+#search-container-autocomplete{
   font-size: small;
 }

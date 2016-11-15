@@ -18,9 +18,11 @@ type essTermQuery struct {
 
 type essNestedTermQuery struct {
 	Nested struct {
-		Path string  `json:"path"`
+		Path  string `json:"path"`
 		Query struct {
-			Term map[string]string `json:"term"`
+			Bool struct {
+				Filter []interface{} `json:"filter"`
+			} `json:"bool"`
 		} `json:"query"`
 	} `json:"nested"`
 }
@@ -54,9 +56,17 @@ func main() {
 		r.Host = essURL.Host
 		r.URL.Host = r.Host
 		r.URL.Scheme = essURL.Scheme
-		r.URL.RawQuery = ""
 	}
 	essProxy := &httputil.ReverseProxy{Director: director}
+
+	http.HandleFunc("/repositories/repository/_search", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			http.Error(w, "Method not supported", http.StatusForbidden)
+			return
+		}
+		essProxy.ServeHTTP(w, r)
+		return
+	})
 
 	http.HandleFunc("/codesearch/code/_search", func(w http.ResponseWriter, r *http.Request) {
 
@@ -66,6 +76,8 @@ func main() {
 		}
 
 		var query essQuery
+		nestedQueries := make(map[string]essNestedTermQuery)
+
 		highlightFields := make(map[string]map[string]string)
 
 		for k, values := range r.URL.Query() {
@@ -75,20 +87,39 @@ func main() {
 					highlightFields[v] = map[string]string{}
 					continue
 				}
+				// content field is analyzed by ESS and default tokenizer lower cases
+				if k == "content" {
+					v = strings.ToLower(v)
+				}
 				// detect if we need a nested query
 				parts := strings.Split(k, ".")
-				if(len(parts) > 1) {
+				if len(parts) > 1 {
 					var nestedQuery essNestedTermQuery
-					nestedQuery.Nested.Path = parts[0]
-					nestedQuery.Nested.Query.Term = map[string]string{k: strings.ToLower(v)}
-					query.Query.Bool.Filter = append(query.Query.Bool.Filter, nestedQuery)
+					if val, ok := nestedQueries[parts[0]]; ok {
+						nestedQuery = val
+					} else {
+						nestedQuery.Nested.Path = parts[0]
+					}
+					var termQuery essTermQuery
+					termQuery.Term = map[string]string{k: v}
+					nestedQuery.Nested.Query.Bool.Filter = append(nestedQuery.Nested.Query.Bool.Filter, termQuery)
+					nestedQueries[parts[0]] = nestedQuery
 					continue
 				}
 				var termQuery essTermQuery
-				termQuery.Term = map[string]string{k: strings.ToLower(v)}
+				termQuery.Term = map[string]string{k: v}
 				query.Query.Bool.Filter = append(query.Query.Bool.Filter, termQuery)
 			}
 		}
+		// nested queries
+		values := make([]essNestedTermQuery, 0, len(nestedQueries))
+		for _, v := range nestedQueries {
+			values = append(values, v)
+		}
+		if len(values) > 0 {
+			query.Query.Bool.Filter = append(query.Query.Bool.Filter, values)
+		}
+
 		query.Highlight.Fields = highlightFields
 		b, err := json.Marshal(query)
 		if err != nil {
@@ -114,7 +145,6 @@ func main() {
 		essProxy.ServeHTTP(w, r)
 		return
 	})
-
 
 	// serve assets
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./static/css"))))

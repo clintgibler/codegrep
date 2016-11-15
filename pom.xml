@@ -15,14 +15,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-<<<<<<< HEAD
-=======
     <groupId>org.apache.tika</groupId>
     <artifactId>tika-core</artifactId>
     <version>1.13</version>
 </dependency>
     <dependency>
->>>>>>> aa5c7f7... basic proof of concept implementation
         <groupId>org.antlr</groupId>
         <artifactId>antlr4-runtime</artifactId>
         <version>4.5.3</version>

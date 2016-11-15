@@ -15,7 +15,6 @@
 /*jshint -W117 */
 "use strict";
 
-
 var module = angular.module("codesearchApp", ["ngMaterial", "ngMessages", "ngRoute", "ngSanitize", "LocalStorageModule", "hljs"])
   .config(function ($mdThemingProvider) {
     $mdThemingProvider.theme('default')
@@ -23,102 +22,128 @@ var module = angular.module("codesearchApp", ["ngMaterial", "ngMessages", "ngRou
       .accentPalette('blue');
   });
 
-module.service("searchService", function(
-  $http,
-  $location
-){
+module.service("utilityService", function () {
+  this.encodeQueryData = function (data) {
+    let ret = [];
+    for (let d in data)
+      ret.push(encodeURIComponent(d) + '=' + encodeURIComponent(data[d]));
+    return ret.join('&');
+  }
+  this.extractSnippet = function (lines, line) {
+    var output = [];
+    // antlr4 line number starts from 1
+    if (lines.length >= line - 1) {
+      output.push(lines[line - 1]);
+      if (line - 2 > 0) {
+        output.push(lines[line - 2]);
+      }
+    }
+    if (lines.length >= line) {
+      output.push(lines[line]);
+    }
+    return output.join("\n");
+  }
+})
 
+module.service("searchService", function ($http) {
+  this.search = function (params) {
+    var params = _.clone(params);
+    if (params["tokens.type"]) {
+      params["tokens.text"] = params["search"];
+    }
+    else {
+      params["content"] = params["search"];
+    }
+    delete (params.search)
+    params["highlight"] = ["content"];
+    return $http.get("/codesearch/code/_search?", { params: params });
+  };
+});
+
+module.service("searchStateService", function (
+  $http,
+  $location,
+  searchService
+) {
   var _results;
   var _error;
-  var _text = "";
-  var _query = {};
+  var _params = {};
   var _loading = false;
-  this.loading = function() {
+
+  this.loading = function () {
     return _loading;
   }
 
-  var parseText = function(searchText) {
-    var params = {
-      "content": [],
-      "highlight": ["content"]
-    }
-    var parts = searchText.split(/\s+/);
-    _.each(parts, function (part) {
-      var p = part.split(/:(.+)?/)
-      if (p.length > 1) {
-        if (!_.has(params, p[0])) {
-          params[p[0]] = [];
-        }
-        params[p[0]].push(p[1]);
-        params[p[0]] = _.uniq(params[p[0]]);
-      }
-      else {
-        params.content.push(p[0]);
-        params.content = _.uniq(params.content);
-      }
-    });
-    return params;
-  };
-
-  this.getQuery = function(){
-    return _query;
+  this.search = function (params) {
+    _loading = true;
+    _results = {};
+    _params = params;
+    return searchService.search(params).success(function (data) {
+      _results = data;
+      _loading = false;
+    })
+      .error(function (data) {
+        _error = data;
+        _loading = false;
+      });
   }
 
-  this.getResults = function(){
+  this.getResults = function () {
     return _results;
   };
 
-  this.getText = function(){
-    return _text;
+  this.getParams = function () {
+    return _params;
   }
-  // do a search - update location
-  this.search = function (searchText) {
-    _text = searchText;
-    _loading = true;
-    _results = {};
-    var params = parseText(searchText);
-    $http.get("/codesearch/code/_search?", { params: params }).success(function (data, status, headers, config) {
-      _results = data;
-      _loading = false;
-    }).error(function (data, status, headers, config) {
-      _error = data;
-      _loading = false;
-      console.log("Useless Error Message!");
-    });
-  };
-  
 });
 
-module.controller("DetailsController", function($http, $scope, $routeParams){
+module.controller("DetailsController", function ($http, $scope, $routeParams, utilityService) {
+  $scope.blah = "";
   $scope.hit = {};
   $scope.loading = true;
   $http.get("/codesearch/code/" + $routeParams.documentId).success(function (data, status, headers, config) {
     $scope.loading = false;
     $scope.hit = data;
   });
+  $scope.short = function (str) {
+    return str.split("/").pop();
+  }
+  $scope.getURL = function (repo, filename) {
+    return repo.replace(".git", "").concat("/tree/master/").concat(filename);
+  };
 
+  $scope.getIdentifiers = function (repo, identifier) {
+    return $http.get("");
+  };
 });
 
-module.directive('sourceCode', function($compile, $sanitize) {
+module.directive('sourceCode', function ($compile, $sanitize, utilityService) {
   return {
     restrict: 'E',
     scope: {
       hit: '='
     },
     replace: true,
-    link: function(scope, element) {
-      function replaceWith(out, pos, target, replacement){
-        return out.substr(0, pos) + out.substr(pos).replace(target, replacement); 
+    link: function (scope, element) {
+      function replaceWith(out, pos, target, replacement) {
+        return out.substr(0, pos) + out.substr(pos).replace(target, replacement);
       }
-      var format = function() {
+      var format = function () {
         if (scope.hit._source.tokens.length == 0) {
           return "<pre>" + scope.hit._source.content + "</pre>";
         }
         var out = "";
         var prev = 0;
-        _.each(scope.hit._source.tokens, function(token) {
+        _.each(_.sortBy(scope.hit._source.tokens, function (t) { return t.char; }), function (token) {
           out += "<span class='non-token'>" + _.escape(scope.hit._source.content.slice(prev, token.char)) + "</span>";
-          out += "<a class='token' href='"+ "/search?q=tokens.text:" + token.text + " " + "repository:" + scope.hit._source.repository + "'>" + token.text +"</a>";
+          out += "<a class='token token-" + scope.hit._source.language + "-" + token.type + "' "
+            + "href='" + "/search?" + utilityService.encodeQueryData({
+              "search": token.text,
+              "tokens.type": token.type,
+              "language": scope.hit._source.language,
+              "repository": scope.hit._source.repository
+            })
+            + "'>" + token.text + "</a>";
           prev = token.char + token.text.length;
         });
         out += "<span class='non-token'>" + _.escape(scope.hit._source.content.slice(prev)) + "</span>";
@@ -130,52 +155,122 @@ module.directive('sourceCode', function($compile, $sanitize) {
   };
 });
 
-module.controller("SearchController", function(
-  $location,
+module.controller("SearchController", function (
   $scope,
-  searchService
-){
-  var params = $location.search();
-  if(params.q) {
-    searchService.search(params.q);
-  }
+  $routeParams,
+  searchService,
+  searchStateService,
+  utilityService
+) {
+  var params = $routeParams;
+  var loading = true;
+  $scope.total = 0;
+  $scope.diplayed = 0;
 
-  $scope.highlight = function(lang, content) {
-    return hljs.highlightAuto(content).value;
-  }
+  $scope.resultsByToken = {};
+  $scope.results = [];
 
-  $scope.essResults = searchService.getResults;
-  $scope.getURL = function(repo, filename) {
-    return repo.replace(".git","").concat("/tree/master/").concat(filename);
-  };
-  $scope.applyFilter = function(name, value) {
-    var searchText = searchService.getText();
-    searchText = searchText.concat(" ").concat(name).concat(":").concat(value);
-    $location.path("/search").search("q", searchText);
-  };
-  $scope.format = function(content, tokens) {
+  searchStateService.search($routeParams).success(function (data) {
+    $scope.total = data.hits.total;
+    $scope.displayed = data.hits.hits.length;
 
-  };
+    _.each(data.hits.hits, function (hit) {
+
+
+      var tokenMatch = false;
+      // see if the search term matches any tokens - so we can rate them higher
+      _.each(hit._source.tokens, function (token) {
+        if (token.text === params["search"]) {
+          tokenMatch = true;
+          if (!_.has($scope.resultsByToken, token.type)) {
+            $scope.resultsByToken[token.type] = {};
+          }
+          if (!_.has($scope.resultsByToken[token.type], hit._source.repository)) {
+            $scope.resultsByToken[token.type][hit._source.repository] = {};
+          }
+          if (!_.has($scope.resultsByToken[token.type][hit._source.repository], hit._source.filename)) {
+            $scope.resultsByToken[token.type][hit._source.repository][hit._source.filename] = {
+              "tokens": [],
+              "language": hit._source.language,
+              "id": hit._id
+            }
+          }
+          $scope.resultsByToken[token.type][hit._source.repository][hit._source.filename].tokens.push({
+            "line": token.line,
+            "snippet": utilityService.extractSnippet(hit._source.content.split("\n"), token.line)
+          });
+        }
+      });
+
+      if (!tokenMatch) {
+        $scope.results.push(hit);
+      }
+
+    });
+    $scope.loading = false;
+  })
+    .error(function (data) {
+      $scope.loading = false;
+    });
 });
 
-module.controller("HomeController", function (){});
+module.controller("HomeController", function () { });
 module.controller("SearchBarController", function (
   $http,
   $scope,
   $location,
-  searchService
+  $q,
+  $timeout,
+  searchStateService,
+  utilityService
 ) {
 
-  $scope.loading = function() {
-     return searchService.loading();
+  $scope.languages = ["java", "go"];
+  $scope.tokenTypes = ["method", "function", "variable", "import", "identifier", "annotation", "annotationtype", "class", "enum", "interface", "package"];
+  $scope.repositories = [];
+
+  $scope.updateRepositories = function (searchText) {
+    var deferred = $q.defer();
+    $http.get("/repositories/repository/_search?q=" + searchText + "*").success(function (data) {
+      var results = _.map(data.hits.hits, function (hit) { return hit._source.uri });
+      deferred.resolve(results);
+    }).error(function () {
+      deferred.reject([]);
+    });
+    return deferred.promise;
+  }
+
+  $scope.loading = function () {
+    return searchStateService.loading();
   };
-   $scope.searchText = searchService.getText();
-   $scope.essResults = searchService.getResults;
-   $scope.onSubmit = function() {
-     $location.path("/search").search("q", $scope.searchText);
+
+  $scope.params = {
+    "search": "",
+    "tokens.type": "",
+    "repository": "",
+    "language": ""
   };
-  $scope.$watch(function() {
-    return searchService.getText()}, function(n, cur) { 
-    $scope.searchText = n;
+
+  $scope.onSubmit = function () {
+    var params = $scope.params;
+    _.each(params, function removeUndefined(value, key) {
+      if (!value) {
+        delete params[key];
+      }
+    });
+    $location.url("/search?" + utilityService.encodeQueryData(params));
+  };
+
+  $scope.$watch(function () {
+    return searchStateService.getParams()
+  }, function (n, cur) {
+    $scope.params = n;
   }, true);
- });
+
+});
+
+module.filter('shorten', function () {
+  return function (input) {
+    return input.split("/").pop()
+  }
+});

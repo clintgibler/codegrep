@@ -1,2 +1,2 @@
-https://github.com/antlr/antlr4.git
-https://github.com/torvalds/linux.git
+https://github.com/square/inspect.git
+https://github.com/square/p2.git

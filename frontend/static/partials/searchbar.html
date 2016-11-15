@@ -1,11 +1,36 @@
 <div ng-controller="SearchBarController">
     <div flex layout="row" id="search-container">
-        <form ng-submit="onSubmit()" flex layout="row">
-            <md-input-container class="md-icon-float md-block" flex="100">
-                <input autocomplete="off" type="text" ng-model="searchText" spellcheck="false" ng-change="onSubmit()" ng-model-options="{ updateOn: 'default blur', debounce: { default: 1000, blur: 0 } }"
-                    placeholder="Enter your search query here"></input>
-            </md-input-container>
-       </form>
+        <form ng-submit="onSubmit()" flex layout="column">
+            <div flex layout="row">
+                <md-input-container class="md-icon-float md-block" flex="70">
+                    <input type="input" ng-model="params.search" spellcheck="false" placeholder="Enter your search query here"></input>
+                </md-input-container>
+                <md-autocomplete flex="10" md-no-cache md-selected-item="params.language" md-search-text="languageSearchText" md-items="item in languages | filter:languageSearchText"
+                    md-item-text="item" md-floating-label="Language" md-min-length="0">
+                    <md-item-template>
+                        <span md-highlight-text="languageSearchText">{{ item }}</span>
+                    </md-item-template>
+                </md-autocomplete>
+                <md-autocomplete flex="20" md-no-cache md-selected-item="params['tokens.type']" md-search-text="tokenTypeSearchText" md-items="item in tokenTypes | filter:tokenTypeSearchText"
+                    md-item-text="item" md-floating-label="Type" md-min-length="0">
+                    <md-item-template>
+                        <span md-highlight-text="tokenTypeSearchText">{{ item }}</span>
+                    </md-item-template>
+                </md-autocomplete>
+            </div>
+            <div flex layout="row">
+                <md-autocomplete flex="60" md-no-cache="true" md-menu-class="search-container-autocomplete" md-selected-item="params.repository"
+                    md-search-text="repositorySearchText" md-items="item in updateRepositories(repositorySearchText)" md-item-text="item"
+                    md-floating-label="Repository" md-min-length="2">
+                    <md-item-template>
+                        <span md-highlight-text="repositorySearchText">{{ item }}</span>
+                    </md-item-template>
+                </md-autocomplete>
+            </div>
+            <div flex layout="row" id="search-container-submit">
+                <md-button type="submit" class="md-primary md-raised">Search</md-button>
+            </div>
+        </form>
     </div>
     <div flex="100" ng-show="loading()">
         <md-progress-linear md-mode="indeterminate"></md-progress-linear>
