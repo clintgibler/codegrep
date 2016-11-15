@@ -1,0 +1,86 @@
+/*
+ Copyright 2015 - 2016 Square Inc.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http:www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+#search-container {
+  border-right-style: dotted;
+  border-right-width: thin;
+}
+
+#search-container md-input-container {
+  margin-bottom: 0px;
+}
+
+#search-container md-input-container .md-errors-spacer {
+  min-height: 0px;
+}
+
+#query-container button {
+  margin-left: 0px;
+}
+
+#search-results-container {
+  padding-top: 0px;
+}
+
+.search-results-container md-divider {
+  padding-bottom: 10px;
+}
+
+textarea.queryinput {
+  font-family: Consolas, monospace;
+}
+
+md-list {
+  padding-top: 0px;
+}
+
+#saved-query-list-heading {
+  border-bottom-style: dotted;
+  border-bottom-width: thin;
+}
+#saved-query-list-heading  span{
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.saved-query-button {
+  text-align: left;
+}
+
+#right-side-block {
+  border-left-style: dotted;
+  border-left-width: thin;
+  padding-left: 5px;
+}
+
+.fake-link {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+    outline: none;
+}
+
+em {
+ background-color: yellow;
+}
+
+#features-sidenav {
+ border-right-style: dotted;
+ border-right-width: thin; 
+}
+
+#features-sidenav > md-input-container > md-list > md-list-item {
+  padding-left: 0px; 
+}

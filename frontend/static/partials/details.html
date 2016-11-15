@@ -1,0 +1,17 @@
+<div id="details-header" flex layout="row"  md-colors="{background: 'primary-600-0.9'}">
+	<small>
+	    <span><strong>language:</strong></span>
+        <span>{{ hit._source.language }}</span>
+	    <span><strong>filename:</strong></span>
+        <span>{{ hit._source.filename }}</span>
+	    <span><strong>repository:</strong></span>
+        <a ng-href="hit._source.repository">{{ hit._source.repository }}</a>
+		<span flex></span>
+	</small>
+</div>
+
+<div flex layout="row">
+	<div flex id="details-source-code" md-colors="{background: 'primary-50'}">
+    	<source-code ng-if="!loading" hit="hit"></source-code>
+	</div>
+</div>
