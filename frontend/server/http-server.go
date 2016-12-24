@@ -147,22 +147,21 @@ func main() {
 	})
 
 	// serve assets
-	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./static/css"))))
-	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("./static/js"))))
-	http.Handle("/partials/", http.StripPrefix("/partials/", http.FileServer(http.Dir("./static/partials"))))
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./build/css"))))
+	http.Handle("/static/js/", http.StripPrefix("/static/js/", http.FileServer(http.Dir("./build/static/js"))))
 
-	// serve index.html for everything else and let angular handle it
+	// serve index.html for everything else and let react handle it
 	http.HandleFunc("/index.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/index.html")
+		http.ServeFile(w, r, "./build/index.html")
 	})
 
 	// serve index.html for everything else and let angular handle it
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/index.html")
+		http.ServeFile(w, r, "./build/index.html")
 	})
 
 	http.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/robots.txt")
+		http.ServeFile(w, r, "./build/robots.txt")
 	})
 
 	log.Fatal(http.ListenAndServe(listenAddress, nil))
