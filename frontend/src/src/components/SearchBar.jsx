@@ -1,88 +1,106 @@
 import * as React from "react";
-import axios, {
-    AxiosRequestConfig,
-    AxiosResponse,
-    AxiosError,
-    AxiosInstance,
-    AxiosAdapter,
-    Cancel,
-    CancelToken,
-    CancelTokenSource,
-    Canceler
-} from "axios";
-
-import { AutoComplete, Button, Input, Select, Form } from "antd";
+import axios from "axios";
+import { AutoComplete, Button, Form, Input, Select } from "antd";
+import { withRouter } from 'react-router';
 
 
+// TODO(syamp): Fetch these from backend
+const languages = ["java", "go"];
+const type = ["annotation", "class", "import", "method", "package", "variable"];
 
 class SearchBarForm extends React.Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            repositoryOptions: [],
+            languageOptions: languages.map((l) => { return <Select.Option key={l}>{l}</Select.Option> }),
+            typeOptions: type.map((t) => { return <Select.Option key={t}>{t}</Select.Option> }),
+        };
     }
 
-    fetchSearchResults = (e) => {
-        e.preventDefault();
-        // set loading
-        // make a promise 
-        console.log(e.target.value);
-        axios.get(`http://localhost:8080/codesearch/code/_search?content=${e.target.value}&highlight=content`).then(
+    updateRepositoryList = (e) => {
+        axios.get(`http://localhost:8080/repositories/repository/_search?q=${e}*`).then(
             (res) => {
-                this.props.setResults(res.data);
+                const children = res.data.hits.hits.map((hit) => {
+                    return <Select.Option key={hit._source.repository}>{hit._source.repository}</Select.Option>;
+                });
+                this.setState({ "repositoryOptions": children });
             }
-        );
+        )
+    }
+
+    serialize = (obj) => {
+        var str = [];
+        for (let p in obj)
+            if (obj[p] !== undefined && obj.hasOwnProperty(p)) {
+                str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+            }
+        return str.join("&");
+    }
+
+    handleSearch = (e) => {
+        e.preventDefault();
+        this.props.form.validateFields((err, values) => {
+            this.props.router.push(`/search?${this.serialize(values)}`);
+        });
     }
 
     render() {
-        let options = [
-            { value: 'one', label: 'One' },
-            { value: 'two', label: 'Two' }
-        ];
-
-        function logChange(val) {
-            console.log("Selected: " + val);
-        }
+        const { getFieldDecorator } = this.props.form;
+        console.log(this.props.p);
         return (
-            <div className="grid nav-secondary">
-                <div className="grid__col-xs-2"></div>
-                <div className="grid__col-xs-8 grid__col--bleed">
-                    <div className="grid">
-                        <div className="grid__col-xs-12">
-                            <Input onPressEnter={this.fetchSearchResults} autoFocus placeholder="Enter your search term here"></Input>
-                        </div>
-                        <div className="grid__col-xs-6">
-                            <Select tags
-                                showSearch
-                                placeholder="Type"
-                                optionFilterProp="children"
-                                onChange={logChange}
-                                >
-                                <Option value="go">go</Option>
-                                <Option value="java">java</Option>
-                            </Select>
-                        </div>
-                        <div className="grid__col-xs-6">
-                            <Select tags
-                                showSearch
-                                placeholder="Identifier Type"
-                                optionFilterProp="children"
-                                onChange={logChange}
-                                >
-                                <Option value="go">annotations</Option>
-                                <Option value="java">methods</Option>
-                            </Select>
-                        </div>
-                        <div className="grid__col-xs-6">
-                            <AutoComplete placeholder="Repository" dataSource={[]}></AutoComplete>
-                        </div>
-                        <div className="grid__col-xs-2" id="search-button">
-                            <Button type="primary" onClick={this.fetchSearchResults}>Search</Button>
-                        </div>
-                    </div>
+            <Form onSubmit={this.handleSearch}>
+                <div className="grid nav-secondary">
                     <div className="grid__col-xs-2"></div>
+                    <div className="grid__col-xs-8 grid__col--bleed">
+                        <div className="grid">
+                            <div className="grid__col-xs-12">
+                                {getFieldDecorator(`query`, { initialValue: this.props.p.query })(
+                                    <Input autoFocus placeholder="Enter your query here"></Input>
+                                )}
+                            </div>
+                            <div className="grid__col-xs-6">
+                                {getFieldDecorator(`language`, { initialValue: this.props.p.language })(
+
+                                    <Select
+                                        showSearch
+                                        placeholder="Language"
+                                        optionFilterProp="children"
+                                        >
+                                        {this.state.languageOptions}
+                                    </Select>
+                                )}
+                            </div>
+                            <div className="grid__col-xs-6">
+                                {getFieldDecorator(`type`, { initialValue: this.props.p.type })(
+                                    <Select
+                                        showSearch
+                                        placeholder="Identifier Type"
+                                        optionFilterProp="children"
+                                        >
+                                        {this.state.typeOptions}
+                                    </Select>
+                                )}
+                            </div>
+                            <div className="grid__col-xs-6">
+                                {getFieldDecorator(`repository`, { initialValue: this.props.p.repository })(
+                                    <AutoComplete onChange={this.updateRepositoryList} placeholder="Repository">
+                                        {this.state.repositoryOptions}
+                                    </AutoComplete>
+                                )}
+                            </div>
+                            <div className="grid__col-xs-2" id="search-button">
+                                <Button type="primary" htmlType="submit">Search</Button>
+                            </div>
+                        </div>
+                        <div className="grid__col-xs-2"></div>
+                    </div>
                 </div>
-            </div>);
+            </Form>
+        );
     }
 }
 
-export const SearchBar = Form.create()(SearchBarForm);
+
+export const SearchBar = withRouter(Form.create()(SearchBarForm));

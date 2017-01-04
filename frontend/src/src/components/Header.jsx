@@ -11,8 +11,10 @@ export class Header extends React.Component {
                 <div className="grid__col-xs-4">
                     <div className="grid grid--bleed">
                         <Link to="/search" className="grid__col-auto navbar-link">Search</Link>
+                        {/*
                         <Link to="/browse" className="grid__col-auto navbar-link">Browse</Link>
                         <Link to="/add" className="grid__col-auto navbar-link">Add</Link>
+                        */}
                     </div>
                 </div>
                 <div className="grid__col-xs-4">

@@ -33,9 +33,6 @@ body {
   font-size: small;
 }
 
-#browser-filename-breadcrumb {
-  margin-top: 12px;
-}
 .code-highlight {
   font-weight: 600;
 }
@@ -44,6 +41,15 @@ body {
   padding-bottom: 12px;
 }
 
+#editor{
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+}
+
+
+
+#browser-filename-breadcrumb {
+  margin-top: 12px;
+}
 .navbar-link:hover {
   color: #fbf1d3;
   text-decoration: none;
@@ -74,5 +80,6 @@ body {
 
 }
 
-.browser-sidenav-token-type {
+.sidebar-decl {
+  font-size: 12px;
 }

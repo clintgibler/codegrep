@@ -36,6 +36,8 @@ type essQuery struct {
 	Highlight struct {
 		Fields map[string]map[string]string `json:"fields"`
 	} `json:"highlight"`
+  Size int `json:"size"`
+  From int `json:"from"`
 }
 
 var essURLInput string
@@ -76,6 +78,7 @@ func main() {
 		}
 
 		var query essQuery
+    query.Size = 100
 		nestedQueries := make(map[string]essNestedTermQuery)
 
 		highlightFields := make(map[string]map[string]string)

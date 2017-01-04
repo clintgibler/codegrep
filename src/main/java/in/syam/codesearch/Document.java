@@ -36,7 +36,7 @@ public class Document {
                     writer.beginObject();
                     writer.name("text").value(t.getText());
                     writer.name("line").value(t.getLine());
-                    writer.name("char").value(t.getStartIndex());
+                    writer.name("char").value(t.getCharPositionInLine());
                     writer.name("type").value(type);
                     writer.endObject();
                 }
