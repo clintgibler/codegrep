@@ -41,7 +41,7 @@ export class Search extends React.Component {
         if (values.language) {
             params["language"] = values.language;
         }
-        axios.get(`http://localhost:8080/codesearch/code/_search`, { params: params }).then(
+        axios.get(`/codesearch/code/_search`, { params: params }).then(
             (res) => {
                 console.log("State updated!");
                 this.setState({ "loading": false, "results": res.data });

@@ -28,7 +28,7 @@ export class Browser extends React.Component {
 	}
 
 	update = (id) => {
-		axios.get(`http://localhost:8080/codesearch/code/${id}`).then(
+		axios.get(`/codesearch/code/${id}`).then(
 			(res) => {
 				this.setState({ data: res.data });
 				this.setState({ loading: false });

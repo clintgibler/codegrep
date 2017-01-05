@@ -20,7 +20,7 @@ class SearchBarForm extends React.Component {
     }
 
     updateRepositoryList = (e) => {
-        axios.get(`http://localhost:8080/repositories/repository/_search?q=${e}*`).then(
+        axios.get(`/repositories/repository/_search?q=${e}*`).then(
             (res) => {
                 const children = res.data.hits.hits.map((hit) => {
                     return <Select.Option key={hit._source.repository}>{hit._source.repository}</Select.Option>;

@@ -26,7 +26,7 @@ export class Outline extends React.Component {
 	}
 
 	updateTokenInfo = (token, repo) => {
-		axios.get('http://localhost:8080/codesearch/code/_search', {
+		axios.get('/codesearch/code/_search', {
 			"params": {
 				"tokens.text": token.text,
 				"repository": repo
