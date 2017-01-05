@@ -29,10 +29,10 @@ export class Search extends React.Component {
         this.setState({ "failed": false });
         let params = {};
         if (values.type) {
-            params["tokens.text"] = values.query;
+            params["tokens.text"] = values.search;
             params["tokens.type"] = values.type;
         } else {
-            params["content"] = values.query;
+            params["content"] = values.search;
             params["highlight"] = "content";
         }
         if (values.repository) {

@@ -56,8 +56,8 @@ class SearchBarForm extends React.Component {
                     <div className="grid__col-xs-8 grid__col--bleed">
                         <div className="grid">
                             <div className="grid__col-xs-12">
-                                {getFieldDecorator(`query`, { initialValue: this.props.p.query })(
-                                    <Input autoFocus placeholder="Enter your query here"></Input>
+                                {getFieldDecorator(`search`, { initialValue: this.props.p.search })(
+                                    <Input autoFocus placeholder="Enter your search term here"></Input>
                                 )}
                             </div>
                             <div className="grid__col-xs-6">

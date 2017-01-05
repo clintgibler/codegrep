@@ -15,6 +15,8 @@ import 'brace/mode/java';
 import 'brace/mode/golang';
 import 'brace/theme/solarized_light';
 
+import _ from "lodash";
+
 
 export class Browser extends React.Component {
 
@@ -52,12 +54,18 @@ export class Browser extends React.Component {
 
 	componentWillMount() {
 		this.update(this.props.location.query.id)
+
 	}
 
 	componentWillReceiveProps(nextProps) {
-		if(nextProps.location.query.id != this.props.location.query.id) {
+		 if(!_.isEqual(nextProps.location.query, this.props.location.query)) {
 			this.update(nextProps.location.query.id)
 		}
+
+			if(this.editor) {
+				console.log("Asking editor to line:", this.props.location.query.line);
+				this.editor.gotoLine(nextProps.location.query.line, nextProps.location.query.char, true);
+			}
 	}
 
 	render() {
@@ -97,7 +105,6 @@ export class Browser extends React.Component {
 					return (<Tree.TreeNode title={<span>{token.text}</span>} key={`${token.line}:${token.char}`} />);
 				});
 				treeNodes.push(<Tree.TreeNode title={key} key={key}>{leafNodes}</Tree.TreeNode>);
-				console.log(key + " = " + value.length);
 			}
 
 
@@ -148,8 +155,8 @@ export class Browser extends React.Component {
 								value={this.state.data._source.content} readOnly={true}
 								onLoad={(editor) => {
 									this.editor = editor;
-									editor.gotoLine(this.props.location.query.line, this.props.location.query.char, true);
 									editor.focus();
+									editor.gotoLine(this.props.location.query.line, this.props.location.query.char, true);
 									editor.getSession().setUseWrapMode(true);
 									editor.getSelection().on("changeSelection", () => {
 										this.handleSelectionChange(editor.getSelectedText());
