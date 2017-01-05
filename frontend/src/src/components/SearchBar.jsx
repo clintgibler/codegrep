@@ -23,7 +23,7 @@ class SearchBarForm extends React.Component {
         axios.get(`/repositories/repository/_search?q=${e}*`).then(
             (res) => {
                 const children = res.data.hits.hits.map((hit) => {
-                    return <Select.Option key={hit._source.repository}>{hit._source.repository}</Select.Option>;
+                    return <Select.Option key={hit._source.uri}>{hit._source.uri}</Select.Option>;
                 });
                 this.setState({ "repositoryOptions": children });
             }
