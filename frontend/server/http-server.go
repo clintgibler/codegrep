@@ -36,6 +36,8 @@ type essQuery struct {
 	Highlight struct {
 		Fields map[string]map[string]string `json:"fields"`
 	} `json:"highlight"`
+  Size int `json:"size"`
+  From int `json:"from"`
 }
 
 var essURLInput string
@@ -76,6 +78,7 @@ func main() {
 		}
 
 		var query essQuery
+    query.Size = 100
 		nestedQueries := make(map[string]essNestedTermQuery)
 
 		highlightFields := make(map[string]map[string]string)
@@ -147,22 +150,21 @@ func main() {
 	})
 
 	// serve assets
-	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./static/css"))))
-	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("./static/js"))))
-	http.Handle("/partials/", http.StripPrefix("/partials/", http.FileServer(http.Dir("./static/partials"))))
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./build/css"))))
+	http.Handle("/static/js/", http.StripPrefix("/static/js/", http.FileServer(http.Dir("./build/static/js"))))
 
-	// serve index.html for everything else and let angular handle it
+	// serve index.html for everything else and let react handle it
 	http.HandleFunc("/index.html", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/index.html")
+		http.ServeFile(w, r, "./build/index.html")
 	})
 
 	// serve index.html for everything else and let angular handle it
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/index.html")
+		http.ServeFile(w, r, "./build/index.html")
 	})
 
 	http.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/robots.txt")
+		http.ServeFile(w, r, "./build/robots.txt")
 	})
 
 	log.Fatal(http.ListenAndServe(listenAddress, nil))
