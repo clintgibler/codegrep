@@ -20,6 +20,8 @@ libraryDependencies ++= Seq(
 ).map(_ % circeVersion)
 
 libraryDependencies += "org.antlr" % "antlr4" % "4.7.1"
+libraryDependencies += "org.apache.tika" % "tika-core" % "1.18"
+
 
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "in.syam.controllers._"
