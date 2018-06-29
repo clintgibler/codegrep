@@ -9,3 +9,9 @@ frontend-dev/node_modules
 /.project
 /.settings
 /RUNNING_PID
+.classpath
+.project
+.settings
+target/
+.vscode
+*.swp

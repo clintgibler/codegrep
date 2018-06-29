@@ -1,0 +1,22 @@
+#!/bin/sh
+
+tempfoo=`basename $0`
+TMPFILE=`mktemp /tmp/${tempfoo}.XXXXXX` || exit 1
+authtoken=$(cat /secrets/github-authtoken)
+for lang in java go ruby
+	do
+	url="https://api.github.com/search/repositories?q=stars:%3E2000%20language:${lang}&sort=stars&order=desc&per_page=100"
+	pagedetails=`mktemp /tmp/pagedetails.XXXXX`
+	curl -v -H "Authorization: token $authtoken" $url 2>$pagedetails  | grep clone_url | perl -lan -e '$F[1] =~ s/[",]//g; print $F[1]' >> $TMPFILE
+	grep Link: $pagedetails
+	if [[ $? -eq 0 ]];then
+	let count=$(grep Link: $pagedetails | perl -lan -e 'if($F[4] =~ /(\d+)>;$/){print $1};')
+	for i in `seq 2 $count`
+	do
+	curl -H "Authorization: token $authtoken" "$url&page=$i"  | grep clone_url | perl -lan -e '$F[1] =~ s/[",]//g; print $F[1]' >> $TMPFILE
+	sleep 1
+	done
+	fi
+done
+cat $TMPFILE
+mv $TMPFILE /data/github-top2k.txt
