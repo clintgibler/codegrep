@@ -1,6 +1,0 @@
-{
-  "id" : "x",
-  "filename": "boo.java",
-  "repository": "git://git.repo",
-  "content": "package pooku; class swami {}"
-}

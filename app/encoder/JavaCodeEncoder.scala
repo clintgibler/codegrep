@@ -15,8 +15,32 @@ object JavaCodeEncoder extends CodeEncoder {
         tokens.addBinding("package", ctx.packageName.Identifier.getSymbol)
       }
 
-      override def enterVariableDeclarator(ctx: Java8Parser.VariableDeclaratorContext): Unit = {
-        tokens.addBinding("variable", ctx.variableDeclaratorId().Identifier().getSymbol)
+      override def enterSingleStaticImportDeclaration(ctx: Java8Parser.SingleStaticImportDeclarationContext): Unit = {
+        tokens.addBinding("import", ctx.Identifier().getSymbol)
+      }
+
+      override def enterNormalClassDeclaration(ctx: Java8Parser.NormalClassDeclarationContext): Unit = {
+        tokens.addBinding("class", ctx.Identifier().getSymbol)
+      }
+
+      override def enterVariableDeclaratorId(ctx: Java8Parser.VariableDeclaratorIdContext): Unit = {
+        tokens.addBinding("variable", ctx.Identifier().getSymbol)
+      }
+
+      override def enterMethodDeclarator(ctx: Java8Parser.MethodDeclaratorContext): Unit = {
+        tokens.addBinding("method", ctx.Identifier().getSymbol)
+      }
+
+      override def enterEnumDeclaration(ctx: Java8Parser.EnumDeclarationContext): Unit = {
+        tokens.addBinding("enum", ctx.Identifier().getSymbol)
+      }
+
+      override def enterNormalInterfaceDeclaration(ctx: Java8Parser.NormalInterfaceDeclarationContext): Unit = {
+        tokens.addBinding("interface", ctx.Identifier().getSymbol)
+      }
+
+      override def enterAnnotationTypeElementDeclaration(ctx: Java8Parser.AnnotationTypeElementDeclarationContext): Unit = {
+        tokens.addBinding("annotation", ctx.Identifier().getSymbol)
       }
 
     }, parser.compilationUnit)

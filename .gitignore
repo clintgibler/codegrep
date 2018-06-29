@@ -12,6 +12,8 @@ frontend-dev/node_modules
 .classpath
 .project
 .settings
+gradle
+gradlew
 target/
 .vscode
 *.swp

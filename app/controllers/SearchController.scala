@@ -13,6 +13,7 @@ import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
 class SearchController (cc: ControllerComponents, repo: SearchDataSource) extends AbstractController(cc) {
   def search() = Action { implicit request: Request[AnyContent] => {
+    Logger.info("Search request: address:%s parameters:%s".format(request.remoteAddress, request.rawQueryString))
     var res = repo.getDocumentByTerm(request.queryString)
     res match {
       case Left(failure) => NotFound(failure.toString)
