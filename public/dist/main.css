@@ -1,0 +1,26 @@
+.search-result-item {
+    padding-bottom: 12px;
+    list-style: none;
+}
+.search-result-item > hr {
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+.search-result-item > a {
+    text-decoration: none;
+}
+
+.search-result-item > .code-snippet {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+  white-space: pre;
+}
+
+.search-result-item > .code-snippet > em {
+    background: #FBF1A9;
+}
+.code {
+    white-space: pre;
+    font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+}

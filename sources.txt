@@ -1,2 +1,0 @@
-https://github.com/square/inspect.git
-https://github.com/square/p2.git
