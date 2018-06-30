@@ -19,7 +19,7 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
       hit.highlight("content").mkString
     }
     else {
-      hit.sourceField("content").toString.slice(0,600)
+      hit.sourceField("content").toString.slice(0, 600)
     }
 
     new SearchResultModel(id = hit.id,
@@ -36,9 +36,9 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
 
   // TODO(syam): Get these from elasticsearch
   override def getAvailableIdentifiers(language: String): Either[SearchDataSourceError, Seq[String]] = {
-    val default = "package" :: "import" :: "variable" :: Nil
-    val go = "interface" :: "type" :: default
-    val java = "annotation" :: default
+    val default = List.empty
+    val go = "variable" :: "type" :: "function" :: "method" :: default
+    val java = "variable" :: "package" :: "import" :: "class" :: "variable" :: "method" :: "enum" :: "interface" :: "annotation" :: default
     language match {
       case "go" => return Right(go)
       case "java" => return Right(java)

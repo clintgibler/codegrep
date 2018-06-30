@@ -83,8 +83,9 @@ update msg model =
             let
                 input = model.input
                 newInput = {input | language = Just newLanguage}
+                newModel = { model | input = newInput}
             in
-            ( { model | input = newInput }, Cmd.none )
+            ( newModel , fetchIdentifiers newModel )
         ChangeIdentifier newIdentifier ->
             let
                 input = model.input
@@ -101,7 +102,7 @@ init model maybeQuery maybeLanguage maybeIdentifier =
         newInput =  {query = maybeQuery, language = maybeLanguage, identifier = maybeIdentifier}
         newModel = {model | input = newInput}
     in
-        (newModel, Cmd.batch [fetchResults newModel, fetchIdentifiers, fetchLanguages])
+        (newModel, Cmd.batch [fetchResults newModel, fetchIdentifiers newModel, fetchLanguages])
 
 languagesDecoder: Decode.Decoder (List String)
 languagesDecoder =
@@ -117,11 +118,17 @@ identifiersDecoder: Decode.Decoder (List String)
 identifiersDecoder =
     Decode.list Decode.string
 
-fetchIdentifiers: Cmd Msg
-fetchIdentifiers =
-    Http.get ("/api/identifiers") identifiersDecoder
-        |> RemoteData.sendRequest
-        |> Cmd.map DataReceivedIdentifiers
+fetchIdentifiers: Model -> Cmd Msg
+fetchIdentifiers model =
+    let
+        base = "/api/identifiers"
+        url = case model.input.language of
+            Just(language) -> base ++ "/" ++ language
+            Nothing -> base
+    in
+        Http.get (url) identifiersDecoder
+            |> RemoteData.sendRequest
+            |> Cmd.map DataReceivedIdentifiers
 
 --
 resultsDecoder : Decode.Decoder (List Result)
@@ -270,7 +277,7 @@ maybeList response =
             text ""
 
         RemoteData.Loading ->
-            text "Loading..."
+            div [ class "list pl4 pr4" ][p [][text "Loading..."]]
 
         RemoteData.Success players ->
             list players

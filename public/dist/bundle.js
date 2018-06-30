@@ -11707,7 +11707,25 @@ var _user$project$Pages_Search$maybeList = function (response) {
 		case 'NotAsked':
 			return _elm_lang$html$Html$text('');
 		case 'Loading':
-			return _elm_lang$html$Html$text('Loading...');
+			return A2(
+				_elm_lang$html$Html$div,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$class('list pl4 pr4'),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$p,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Loading...'),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				});
 		case 'Success':
 			return _user$project$Pages_Search$list(_p0._0);
 		default:
@@ -12201,11 +12219,25 @@ var _user$project$Pages_Search$view = function (model) {
 var _user$project$Pages_Search$DataReceivedIdentifiers = function (a) {
 	return {ctor: 'DataReceivedIdentifiers', _0: a};
 };
-var _user$project$Pages_Search$fetchIdentifiers = A2(
-	_elm_lang$core$Platform_Cmd$map,
-	_user$project$Pages_Search$DataReceivedIdentifiers,
-	_krisajenkins$remotedata$RemoteData$sendRequest(
-		A2(_elm_lang$http$Http$get, '/api/identifiers', _user$project$Pages_Search$identifiersDecoder)));
+var _user$project$Pages_Search$fetchIdentifiers = function (model) {
+	var base = '/api/identifiers';
+	var url = function () {
+		var _p11 = model.input.language;
+		if (_p11.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				base,
+				A2(_elm_lang$core$Basics_ops['++'], '/', _p11._0));
+		} else {
+			return base;
+		}
+	}();
+	return A2(
+		_elm_lang$core$Platform_Cmd$map,
+		_user$project$Pages_Search$DataReceivedIdentifiers,
+		_krisajenkins$remotedata$RemoteData$sendRequest(
+			A2(_elm_lang$http$Http$get, url, _user$project$Pages_Search$identifiersDecoder)));
+};
 var _user$project$Pages_Search$DataReceivedLanguages = function (a) {
 	return {ctor: 'DataReceivedLanguages', _0: a};
 };
@@ -12218,15 +12250,15 @@ var _user$project$Pages_Search$DataReceivedResults = function (a) {
 	return {ctor: 'DataReceivedResults', _0: a};
 };
 var _user$project$Pages_Search$fetchResults = function (model) {
-	var _p11 = model.input.query;
-	if (_p11.ctor === 'Just') {
+	var _p12 = model.input.query;
+	if (_p12.ctor === 'Just') {
 		return A2(
 			_elm_lang$core$Platform_Cmd$map,
 			_user$project$Pages_Search$DataReceivedResults,
 			_krisajenkins$remotedata$RemoteData$sendRequest(
 				A2(
 					_elm_lang$http$Http$get,
-					A2(_user$project$Pages_Search$makeSearchAPIUrl, _p11._0, model),
+					A2(_user$project$Pages_Search$makeSearchAPIUrl, _p12._0, model),
 					_user$project$Pages_Search$resultsDecoder)));
 	} else {
 		return _elm_lang$core$Platform_Cmd$none;
@@ -12234,14 +12266,14 @@ var _user$project$Pages_Search$fetchResults = function (model) {
 };
 var _user$project$Pages_Search$update = F2(
 	function (msg, model) {
-		var _p12 = msg;
-		switch (_p12.ctor) {
+		var _p13 = msg;
+		switch (_p13.ctor) {
 			case 'DataReceivedResults':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{results: _p12._0}),
+						{results: _p13._0}),
 					_1: _user$project$Pages_Search$updateURL(model)
 				};
 			case 'DataReceivedLanguages':
@@ -12249,7 +12281,7 @@ var _user$project$Pages_Search$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{languages: _p12._0}),
+						{languages: _p13._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DataReceivedIdentifiers':
@@ -12257,7 +12289,7 @@ var _user$project$Pages_Search$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{identifiers: _p12._0}),
+						{identifiers: _p13._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'Search':
@@ -12271,7 +12303,7 @@ var _user$project$Pages_Search$update = F2(
 				var newInput = _elm_lang$core$Native_Utils.update(
 					input,
 					{
-						query: _elm_lang$core$Maybe$Just(_p12._0)
+						query: _elm_lang$core$Maybe$Just(_p13._0)
 					});
 				return {
 					ctor: '_Tuple2',
@@ -12285,21 +12317,22 @@ var _user$project$Pages_Search$update = F2(
 				var newInput = _elm_lang$core$Native_Utils.update(
 					input,
 					{
-						language: _elm_lang$core$Maybe$Just(_p12._0)
+						language: _elm_lang$core$Maybe$Just(_p13._0)
 					});
+				var newModel = _elm_lang$core$Native_Utils.update(
+					model,
+					{input: newInput});
 				return {
 					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{input: newInput}),
-					_1: _elm_lang$core$Platform_Cmd$none
+					_0: newModel,
+					_1: _user$project$Pages_Search$fetchIdentifiers(newModel)
 				};
 			case 'ChangeIdentifier':
 				var input = model.input;
 				var newInput = _elm_lang$core$Native_Utils.update(
 					input,
 					{
-						identifier: _elm_lang$core$Maybe$Just(_p12._0)
+						identifier: _elm_lang$core$Maybe$Just(_p13._0)
 					});
 				return {
 					ctor: '_Tuple2',
@@ -12309,7 +12342,7 @@ var _user$project$Pages_Search$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
-				return {ctor: '_Tuple2', _0: _p12._0, _1: _elm_lang$core$Platform_Cmd$none};
+				return {ctor: '_Tuple2', _0: _p13._0, _1: _elm_lang$core$Platform_Cmd$none};
 		}
 	});
 var _user$project$Pages_Search$init = F4(
@@ -12327,7 +12360,7 @@ var _user$project$Pages_Search$init = F4(
 					_0: _user$project$Pages_Search$fetchResults(newModel),
 					_1: {
 						ctor: '::',
-						_0: _user$project$Pages_Search$fetchIdentifiers,
+						_0: _user$project$Pages_Search$fetchIdentifiers(newModel),
 						_1: {
 							ctor: '::',
 							_0: _user$project$Pages_Search$fetchLanguages,
