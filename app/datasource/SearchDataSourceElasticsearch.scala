@@ -31,7 +31,7 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
 
   // TODO(syam): Get these from elasticsearch
   override def getAvailableLanguages(): Either[SearchDataSourceError, Seq[String]] = {
-    return Right("go" :: "java" :: Nil)
+    return Right("go" :: "java" :: "text" :: Nil)
   }
 
   // TODO(syam): Get these from elasticsearch
