@@ -15,5 +15,4 @@ class InitializeDataSourceTask(actorSystem: ActorSystem, repo: SearchDataSource)
       case Right(_) =>
     }
   }
-
 }

@@ -10,7 +10,7 @@ import Pages.About as About
 
 -- Routing
 type Route
-    = SearchRoute (Maybe String) (Maybe String) (Maybe String)
+    = SearchRoute (Maybe String) (Maybe String) (Maybe String) (Maybe String)
     | DetailRoute (Maybe String)
     | AboutRoute
     | NotFoundRoute
@@ -18,8 +18,8 @@ type Route
 matchers : Parser (Route -> a) a
 matchers =
     oneOf
-        [ map SearchRoute (top <?> stringParam "query" <?> stringParam "language" <?> stringParam "identifier")
-        , map SearchRoute (s "search" <?> stringParam "query" <?> stringParam "language" <?> stringParam "identifier")
+        [ map SearchRoute (top <?> stringParam "query" <?> stringParam "language" <?> stringParam "identifier" <?> stringParam "repository")
+        , map SearchRoute (s "search" <?> stringParam "query" <?> stringParam "language" <?> stringParam "identifier" <?> stringParam "repository")
         , map DetailRoute (s "detail" <?> stringParam "id")
         , map AboutRoute (s "about")
         ]
@@ -69,9 +69,9 @@ init location =
 urlUpdated: Model -> (Model, Cmd Msg)
 urlUpdated model =
     case model.route of
-        SearchRoute query language identifier ->
+        SearchRoute query language identifier repository ->
             let
-                (newModel, cmd) = Search.init model.searchModel query language identifier
+                (newModel, cmd) = Search.init model.searchModel query language identifier repository
             in
                 ({model | searchModel = newModel}, cmd |> Cmd.map SearchMsg)
         DetailRoute id ->
@@ -93,7 +93,7 @@ view model =
 renderPage : Model -> Html Msg
 renderPage model =
     case model.route of
-        SearchRoute query language identifier -> Search.view model.searchModel |> Html.map SearchMsg
+        SearchRoute query language identifier repository -> Search.view model.searchModel |> Html.map SearchMsg
         DetailRoute id -> Detail.view model.detailModel |> Html.map DetailMsg
         AboutRoute -> About.view |> Html.map AboutMsg
         NotFoundRoute ->  div[][h1[][text "Notfound"]]

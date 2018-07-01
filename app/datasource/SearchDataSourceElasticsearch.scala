@@ -100,6 +100,14 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
           case "content" =>
             queries = termQuery("content", v.mkString.toLowerCase()) :: queries
           case "language" => queries = termQuery("language", v.mkString.toLowerCase()) :: queries
+          // We store "repository" field both analyzed (ie tokenized on whitespace) and as exact string
+          // This allows us to match both exact url or just a part of url
+          case "repository" =>
+              queries =
+                boolQuery().should(
+                  termQuery("repository", v.mkString.toLowerCase()),
+                  termQuery("repository.raw", v.mkString.toLowerCase())
+                ).minimumShouldMatch(1) :: queries
           case "tokens.text" =>
             nestedQueries = termQuery(k, v.mkString) :: nestedQueries
           case "tokens.type" =>
@@ -116,7 +124,7 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
     }.await
 
     var ret: Either[SearchDataSourceError, Seq[SearchResultModel]] = resp match {
-      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString()))
+      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
       case Right(resp) => {
         var ret = resp.result.hits.hits.map((hit) => hitToSearchDocumentModel(hit))
         Right(ret)
@@ -130,9 +138,9 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
       case Left(failure) => Left(SearchDataSourceError.OperationFailed("Failed to encode: %s".format(failure.toString)))
       case Right(code) => {
         import com.sksamuel.elastic4s.http.ElasticDsl._
-        val resp = client.execute(update(code.id).in(indexName / "code").docAsUpsert(code.json)).await
+        val resp = client.execute(update(code.id).in(indexName / "code").docAsUpsert(code.json())).await
         var ret: Either[SearchDataSourceError, Unit] = resp match {
-          case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString()))
+          case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
           case Right(_) => Right(())
         }
         ret
@@ -148,11 +156,10 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
     }.await
 
     var ret: Either[SearchDataSourceError, Seq[RepositoryModel]] = resp match {
-      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString()))
-      case Right(resp) => {
-        var ret = resp.result.hits.hits.map((hit) => hitToSearchRepositoryModel(hit))
+      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
+      case Right(data) =>
+        var ret = data.result.hits.hits.map((hit) => hitToSearchRepositoryModel(hit))
         Right(ret)
-      }
     }
     ret
   }

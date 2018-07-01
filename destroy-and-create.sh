@@ -6,7 +6,11 @@ curl -XPUT localhost:9200/codesearch -d '
       "properties": {
         "repository": {
           "type":  "string",
-          "index": "not_analyzed" 
+          "fields": {
+            "raw": {
+               "type": "keyword"
+            }
+          }
         },
         "language": {
           "type": "string",

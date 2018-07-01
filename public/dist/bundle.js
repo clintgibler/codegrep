@@ -11912,78 +11912,101 @@ var _user$project$Pages_Search$maybeSearchIdentifierOptions = function (response
 var _user$project$Pages_Search$makeSearchAPIUrl = F2(
 	function (query, model) {
 		return function (url) {
-			var _p3 = model.input.language;
+			var _p3 = model.input.repository;
 			if (_p3.ctor === 'Nothing') {
 				return url;
 			} else {
 				var _p4 = _p3._0;
-				return _elm_lang$core$Native_Utils.eq(_p4, 'any') ? url : A2(
+				return _elm_lang$core$Native_Utils.eq(_p4, '') ? url : A2(
 					_elm_lang$core$Basics_ops['++'],
 					url,
-					A2(_elm_lang$core$Basics_ops['++'], '&language=', _p4));
+					A2(_elm_lang$core$Basics_ops['++'], '&repository=', _p4));
 			}
 		}(
 			function (url) {
-				var _p5 = model.input.identifier;
+				var _p5 = model.input.language;
 				if (_p5.ctor === 'Nothing') {
-					return A2(
-						_elm_lang$core$Basics_ops['++'],
-						url,
-						A2(_elm_lang$core$Basics_ops['++'], '?content=', query));
+					return url;
 				} else {
 					var _p6 = _p5._0;
-					return _elm_lang$core$Native_Utils.eq(_p6, 'any') ? A2(
+					return _elm_lang$core$Native_Utils.eq(_p6, 'any') ? url : A2(
 						_elm_lang$core$Basics_ops['++'],
 						url,
-						A2(_elm_lang$core$Basics_ops['++'], '?content=', query)) : A2(
-						_elm_lang$core$Basics_ops['++'],
-						url,
-						A2(
+						A2(_elm_lang$core$Basics_ops['++'], '&language=', _p6));
+				}
+			}(
+				function (url) {
+					var _p7 = model.input.identifier;
+					if (_p7.ctor === 'Nothing') {
+						return A2(
 							_elm_lang$core$Basics_ops['++'],
-							'?tokens.type=',
+							url,
+							A2(_elm_lang$core$Basics_ops['++'], '?content=', query));
+					} else {
+						var _p8 = _p7._0;
+						return _elm_lang$core$Native_Utils.eq(_p8, 'any') ? A2(
+							_elm_lang$core$Basics_ops['++'],
+							url,
+							A2(_elm_lang$core$Basics_ops['++'], '?content=', query)) : A2(
+							_elm_lang$core$Basics_ops['++'],
+							url,
 							A2(
 								_elm_lang$core$Basics_ops['++'],
-								_p6,
-								A2(_elm_lang$core$Basics_ops['++'], '&tokens.text=', query))));
-				}
-			}('/api/search'));
+								'?tokens.type=',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									_p8,
+									A2(_elm_lang$core$Basics_ops['++'], '&tokens.text=', query))));
+					}
+				}('/api/search')));
 	});
 var _user$project$Pages_Search$updateURL = function (model) {
 	var base = '/search';
 	var q1 = function () {
-		var _p7 = model.input.query;
-		if (_p7.ctor === 'Just') {
+		var _p9 = model.input.query;
+		if (_p9.ctor === 'Just') {
 			return A2(
 				_elm_lang$core$Basics_ops['++'],
 				base,
-				A2(_elm_lang$core$Basics_ops['++'], '?query=', _p7._0));
+				A2(_elm_lang$core$Basics_ops['++'], '?query=', _p9._0));
 		} else {
 			return base;
 		}
 	}();
 	var q2 = function () {
-		var _p8 = model.input.language;
-		if (_p8.ctor === 'Just') {
+		var _p10 = model.input.language;
+		if (_p10.ctor === 'Just') {
 			return A2(
 				_elm_lang$core$Basics_ops['++'],
 				q1,
-				A2(_elm_lang$core$Basics_ops['++'], '&language=', _p8._0));
+				A2(_elm_lang$core$Basics_ops['++'], '&language=', _p10._0));
 		} else {
 			return q1;
 		}
 	}();
 	var q3 = function () {
-		var _p9 = model.input.identifier;
-		if (_p9.ctor === 'Just') {
+		var _p11 = model.input.identifier;
+		if (_p11.ctor === 'Just') {
 			return A2(
 				_elm_lang$core$Basics_ops['++'],
 				q2,
-				A2(_elm_lang$core$Basics_ops['++'], '&identifier=', _p9._0));
+				A2(_elm_lang$core$Basics_ops['++'], '&identifier=', _p11._0));
 		} else {
 			return q2;
 		}
 	}();
-	return _elm_lang$navigation$Navigation$newUrl(q3);
+	var q4 = function () {
+		var _p12 = model.input.repository;
+		if (_p12.ctor === 'Just') {
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				q3,
+				A2(_elm_lang$core$Basics_ops['++'], '&repository=', _p12._0));
+		} else {
+			return q3;
+		}
+	}();
+	return _elm_lang$navigation$Navigation$newUrl(q4);
 };
 var _user$project$Pages_Search$identifiersDecoder = _elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string);
 var _user$project$Pages_Search$languagesDecoder = _elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string);
@@ -11991,7 +12014,7 @@ var _user$project$Pages_Search$initialModel = {
 	results: _krisajenkins$remotedata$RemoteData$NotAsked,
 	languages: _krisajenkins$remotedata$RemoteData$NotAsked,
 	identifiers: _krisajenkins$remotedata$RemoteData$NotAsked,
-	input: {query: _elm_lang$core$Maybe$Nothing, language: _elm_lang$core$Maybe$Nothing, identifier: _elm_lang$core$Maybe$Nothing}
+	input: {query: _elm_lang$core$Maybe$Nothing, language: _elm_lang$core$Maybe$Nothing, identifier: _elm_lang$core$Maybe$Nothing, repository: _elm_lang$core$Maybe$Nothing}
 };
 var _user$project$Pages_Search$Model = F4(
 	function (a, b, c, d) {
@@ -12023,9 +12046,9 @@ var _user$project$Pages_Search$resultDecoder = A3(
 					_elm_lang$core$Json_Decode$string,
 					_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Pages_Search$Result))))));
 var _user$project$Pages_Search$resultsDecoder = _elm_lang$core$Json_Decode$list(_user$project$Pages_Search$resultDecoder);
-var _user$project$Pages_Search$SearchFormInput = F3(
-	function (a, b, c) {
-		return {query: a, language: b, identifier: c};
+var _user$project$Pages_Search$SearchFormInput = F4(
+	function (a, b, c, d) {
+		return {query: a, language: b, identifier: c, repository: d};
 	});
 var _user$project$Pages_Search$UpdateModel = function (a) {
 	return {ctor: 'UpdateModel', _0: a};
@@ -12041,9 +12064,9 @@ var _user$project$Pages_Search$ChangeSearchInput = function (a) {
 };
 var _user$project$Pages_Search$searchInputElem = function (model) {
 	var query = function () {
-		var _p10 = model.input.query;
-		if (_p10.ctor === 'Just') {
-			return _p10._0;
+		var _p13 = model.input.query;
+		if (_p13.ctor === 'Just') {
+			return _p13._0;
 		} else {
 			return '';
 		}
@@ -12073,8 +12096,19 @@ var _user$project$Pages_Search$searchInputElem = function (model) {
 		},
 		{ctor: '[]'});
 };
+var _user$project$Pages_Search$RepositoryInputChanged = function (a) {
+	return {ctor: 'RepositoryInputChanged', _0: a};
+};
 var _user$project$Pages_Search$Search = {ctor: 'Search'};
 var _user$project$Pages_Search$searchView = function (model) {
+	var repository = function () {
+		var _p14 = model.input.repository;
+		if (_p14.ctor === 'Just') {
+			return _p14._0;
+		} else {
+			return '';
+		}
+	}();
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -12088,7 +12122,7 @@ var _user$project$Pages_Search$searchView = function (model) {
 				_elm_lang$html$Html$div,
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('flex flex-wrap'),
+					_0: _elm_lang$html$Html_Attributes$class('flex-ns flex-wrap-ns'),
 					_1: {ctor: '[]'}
 				},
 				{
@@ -12097,7 +12131,7 @@ var _user$project$Pages_Search$searchView = function (model) {
 						_elm_lang$html$Html$div,
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$class('w-100 pr2 pb2'),
+							_0: _elm_lang$html$Html_Attributes$class('w-60-ns pr2 pb2'),
 							_1: {ctor: '[]'}
 						},
 						{
@@ -12111,26 +12145,35 @@ var _user$project$Pages_Search$searchView = function (model) {
 							_elm_lang$html$Html$div,
 							{
 								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$class('w-20 pr2 pb2'),
+								_0: _elm_lang$html$Html_Attributes$class('w-40-ns pr2 pb2'),
 								_1: {ctor: '[]'}
 							},
 							{
 								ctor: '::',
 								_0: A2(
-									_elm_lang$html$Html$select,
+									_elm_lang$html$Html$input,
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('select w-100'),
+										_0: _elm_lang$html$Html_Attributes$class('input-reset ba b--black-20 w-100 pa2'),
 										_1: {
 											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html_Events$on,
-												'change',
-												A2(_elm_lang$core$Json_Decode$map, _user$project$Pages_Search$ChangeLanguage, _elm_lang$html$Html_Events$targetValue)),
-											_1: {ctor: '[]'}
+											_0: _elm_lang$html$Html_Attributes$id('repository'),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$html$Html_Attributes$placeholder('Filter repository'),
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$html$Html_Events$onInput(_user$project$Pages_Search$RepositoryInputChanged),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$html$Html_Attributes$value(repository),
+														_1: {ctor: '[]'}
+													}
+												}
+											}
 										}
 									},
-									_user$project$Pages_Search$maybeSearchLanguageOptions(model.languages)),
+									{ctor: '[]'}),
 								_1: {ctor: '[]'}
 							}),
 						_1: {
@@ -12139,7 +12182,7 @@ var _user$project$Pages_Search$searchView = function (model) {
 								_elm_lang$html$Html$div,
 								{
 									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$class('w-20 pr2 pb2'),
+									_0: _elm_lang$html$Html_Attributes$class('w-20-ns pr2 pb2'),
 									_1: {ctor: '[]'}
 								},
 								{
@@ -12154,14 +12197,43 @@ var _user$project$Pages_Search$searchView = function (model) {
 												_0: A2(
 													_elm_lang$html$Html_Events$on,
 													'change',
-													A2(_elm_lang$core$Json_Decode$map, _user$project$Pages_Search$ChangeIdentifier, _elm_lang$html$Html_Events$targetValue)),
+													A2(_elm_lang$core$Json_Decode$map, _user$project$Pages_Search$ChangeLanguage, _elm_lang$html$Html_Events$targetValue)),
 												_1: {ctor: '[]'}
 											}
 										},
-										_user$project$Pages_Search$maybeSearchIdentifierOptions(model.identifiers)),
+										_user$project$Pages_Search$maybeSearchLanguageOptions(model.languages)),
 									_1: {ctor: '[]'}
 								}),
-							_1: {ctor: '[]'}
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$div,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$class('w-20-ns pr2 pb2'),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$select,
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html_Attributes$class('select w-100'),
+												_1: {
+													ctor: '::',
+													_0: A2(
+														_elm_lang$html$Html_Events$on,
+														'change',
+														A2(_elm_lang$core$Json_Decode$map, _user$project$Pages_Search$ChangeIdentifier, _elm_lang$html$Html_Events$targetValue)),
+													_1: {ctor: '[]'}
+												}
+											},
+											_user$project$Pages_Search$maybeSearchIdentifierOptions(model.identifiers)),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}
 						}
 					}
 				}),
@@ -12171,7 +12243,7 @@ var _user$project$Pages_Search$searchView = function (model) {
 					_elm_lang$html$Html$div,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$class('flex flex-wrap'),
+						_0: _elm_lang$html$Html_Attributes$class('flex-ns flex-wrap-ns'),
 						_1: {ctor: '[]'}
 					},
 					{
@@ -12222,12 +12294,12 @@ var _user$project$Pages_Search$DataReceivedIdentifiers = function (a) {
 var _user$project$Pages_Search$fetchIdentifiers = function (model) {
 	var base = '/api/identifiers';
 	var url = function () {
-		var _p11 = model.input.language;
-		if (_p11.ctor === 'Just') {
+		var _p15 = model.input.language;
+		if (_p15.ctor === 'Just') {
 			return A2(
 				_elm_lang$core$Basics_ops['++'],
 				base,
-				A2(_elm_lang$core$Basics_ops['++'], '/', _p11._0));
+				A2(_elm_lang$core$Basics_ops['++'], '/', _p15._0));
 		} else {
 			return base;
 		}
@@ -12250,15 +12322,15 @@ var _user$project$Pages_Search$DataReceivedResults = function (a) {
 	return {ctor: 'DataReceivedResults', _0: a};
 };
 var _user$project$Pages_Search$fetchResults = function (model) {
-	var _p12 = model.input.query;
-	if (_p12.ctor === 'Just') {
+	var _p16 = model.input.query;
+	if (_p16.ctor === 'Just') {
 		return A2(
 			_elm_lang$core$Platform_Cmd$map,
 			_user$project$Pages_Search$DataReceivedResults,
 			_krisajenkins$remotedata$RemoteData$sendRequest(
 				A2(
 					_elm_lang$http$Http$get,
-					A2(_user$project$Pages_Search$makeSearchAPIUrl, _p12._0, model),
+					A2(_user$project$Pages_Search$makeSearchAPIUrl, _p16._0, model),
 					_user$project$Pages_Search$resultsDecoder)));
 	} else {
 		return _elm_lang$core$Platform_Cmd$none;
@@ -12266,14 +12338,14 @@ var _user$project$Pages_Search$fetchResults = function (model) {
 };
 var _user$project$Pages_Search$update = F2(
 	function (msg, model) {
-		var _p13 = msg;
-		switch (_p13.ctor) {
+		var _p17 = msg;
+		switch (_p17.ctor) {
 			case 'DataReceivedResults':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{results: _p13._0}),
+						{results: _p17._0}),
 					_1: _user$project$Pages_Search$updateURL(model)
 				};
 			case 'DataReceivedLanguages':
@@ -12281,7 +12353,7 @@ var _user$project$Pages_Search$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{languages: _p13._0}),
+						{languages: _p17._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DataReceivedIdentifiers':
@@ -12289,7 +12361,7 @@ var _user$project$Pages_Search$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{identifiers: _p13._0}),
+						{identifiers: _p17._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'Search':
@@ -12298,12 +12370,26 @@ var _user$project$Pages_Search$update = F2(
 					_0: model,
 					_1: _user$project$Pages_Search$fetchResults(model)
 				};
+			case 'RepositoryInputChanged':
+				var input = model.input;
+				var newInput = _elm_lang$core$Native_Utils.update(
+					input,
+					{
+						repository: _elm_lang$core$Maybe$Just(_p17._0)
+					});
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{input: newInput}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 			case 'ChangeSearchInput':
 				var input = model.input;
 				var newInput = _elm_lang$core$Native_Utils.update(
 					input,
 					{
-						query: _elm_lang$core$Maybe$Just(_p13._0)
+						query: _elm_lang$core$Maybe$Just(_p17._0)
 					});
 				return {
 					ctor: '_Tuple2',
@@ -12317,7 +12403,7 @@ var _user$project$Pages_Search$update = F2(
 				var newInput = _elm_lang$core$Native_Utils.update(
 					input,
 					{
-						language: _elm_lang$core$Maybe$Just(_p13._0)
+						language: _elm_lang$core$Maybe$Just(_p17._0)
 					});
 				var newModel = _elm_lang$core$Native_Utils.update(
 					model,
@@ -12332,7 +12418,7 @@ var _user$project$Pages_Search$update = F2(
 				var newInput = _elm_lang$core$Native_Utils.update(
 					input,
 					{
-						identifier: _elm_lang$core$Maybe$Just(_p13._0)
+						identifier: _elm_lang$core$Maybe$Just(_p17._0)
 					});
 				return {
 					ctor: '_Tuple2',
@@ -12342,12 +12428,12 @@ var _user$project$Pages_Search$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
-				return {ctor: '_Tuple2', _0: _p13._0, _1: _elm_lang$core$Platform_Cmd$none};
+				return {ctor: '_Tuple2', _0: _p17._0, _1: _elm_lang$core$Platform_Cmd$none};
 		}
 	});
-var _user$project$Pages_Search$init = F4(
-	function (model, maybeQuery, maybeLanguage, maybeIdentifier) {
-		var newInput = {query: maybeQuery, language: maybeLanguage, identifier: maybeIdentifier};
+var _user$project$Pages_Search$init = F5(
+	function (model, maybeQuery, maybeLanguage, maybeIdentifier, maybeRepository) {
+		var newInput = {query: maybeQuery, language: maybeLanguage, identifier: maybeIdentifier, repository: maybeRepository};
 		var newModel = _elm_lang$core$Native_Utils.update(
 			model,
 			{input: newInput});
@@ -12433,9 +12519,9 @@ var _user$project$Main$AboutRoute = {ctor: 'AboutRoute'};
 var _user$project$Main$DetailRoute = function (a) {
 	return {ctor: 'DetailRoute', _0: a};
 };
-var _user$project$Main$SearchRoute = F3(
-	function (a, b, c) {
-		return {ctor: 'SearchRoute', _0: a, _1: b, _2: c};
+var _user$project$Main$SearchRoute = F4(
+	function (a, b, c, d) {
+		return {ctor: 'SearchRoute', _0: a, _1: b, _2: c, _3: d};
 	});
 var _user$project$Main$matchers = _evancz$url_parser$UrlParser$oneOf(
 	{
@@ -12449,10 +12535,13 @@ var _user$project$Main$matchers = _evancz$url_parser$UrlParser$oneOf(
 					_evancz$url_parser$UrlParser_ops['<?>'],
 					A2(
 						_evancz$url_parser$UrlParser_ops['<?>'],
-						_evancz$url_parser$UrlParser$top,
-						_evancz$url_parser$UrlParser$stringParam('query')),
-					_evancz$url_parser$UrlParser$stringParam('language')),
-				_evancz$url_parser$UrlParser$stringParam('identifier'))),
+						A2(
+							_evancz$url_parser$UrlParser_ops['<?>'],
+							_evancz$url_parser$UrlParser$top,
+							_evancz$url_parser$UrlParser$stringParam('query')),
+						_evancz$url_parser$UrlParser$stringParam('language')),
+					_evancz$url_parser$UrlParser$stringParam('identifier')),
+				_evancz$url_parser$UrlParser$stringParam('repository'))),
 		_1: {
 			ctor: '::',
 			_0: A2(
@@ -12464,10 +12553,13 @@ var _user$project$Main$matchers = _evancz$url_parser$UrlParser$oneOf(
 						_evancz$url_parser$UrlParser_ops['<?>'],
 						A2(
 							_evancz$url_parser$UrlParser_ops['<?>'],
-							_evancz$url_parser$UrlParser$s('search'),
-							_evancz$url_parser$UrlParser$stringParam('query')),
-						_evancz$url_parser$UrlParser$stringParam('language')),
-					_evancz$url_parser$UrlParser$stringParam('identifier'))),
+							A2(
+								_evancz$url_parser$UrlParser_ops['<?>'],
+								_evancz$url_parser$UrlParser$s('search'),
+								_evancz$url_parser$UrlParser$stringParam('query')),
+							_evancz$url_parser$UrlParser$stringParam('language')),
+						_evancz$url_parser$UrlParser$stringParam('identifier')),
+					_evancz$url_parser$UrlParser$stringParam('repository'))),
 			_1: {
 				ctor: '::',
 				_0: A2(
@@ -12517,7 +12609,7 @@ var _user$project$Main$urlUpdated = function (model) {
 	var _p1 = model.route;
 	switch (_p1.ctor) {
 		case 'SearchRoute':
-			var _p2 = A4(_user$project$Pages_Search$init, model.searchModel, _p1._0, _p1._1, _p1._2);
+			var _p2 = A5(_user$project$Pages_Search$init, model.searchModel, _p1._0, _p1._1, _p1._2, _p1._3);
 			var newModel = _p2._0;
 			var cmd = _p2._1;
 			return {

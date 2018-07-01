@@ -34,6 +34,7 @@ type alias SearchFormInput =
     { query: Maybe String
     , language: Maybe String
     , identifier: Maybe String
+    , repository: Maybe String
     }
 
 initialModel =
@@ -44,6 +45,7 @@ initialModel =
         { query =  Nothing
         , language = Nothing
         , identifier = Nothing
+        , repository = Nothing
         }
     }
 
@@ -54,6 +56,7 @@ type Msg
     | DataReceivedLanguages (WebData (List String))
     | DataReceivedIdentifiers (WebData (List String))
     | Search
+    | RepositoryInputChanged String
     | ChangeSearchInput String
     | ChangeLanguage String
     | ChangeIdentifier String
@@ -73,6 +76,13 @@ update msg model =
             ( { model | identifiers = response }, Cmd.none )
         Search ->
             ( model , fetchResults model)
+        RepositoryInputChanged newRepositoryInput ->
+            let
+                input = model.input
+                newInput = {input | repository = Just newRepositoryInput}
+            in
+            ( { model | input = newInput }, Cmd.none )
+
         ChangeSearchInput newSearchInput ->
             let
                 input = model.input
@@ -96,10 +106,10 @@ update msg model =
             (model, Cmd.none)
 
 -- Commands
-init: Model -> Maybe String -> Maybe String -> Maybe String -> (Model, Cmd Msg)
-init model maybeQuery maybeLanguage maybeIdentifier =
+init: Model -> Maybe String -> Maybe String -> Maybe String -> Maybe String -> (Model, Cmd Msg)
+init model maybeQuery maybeLanguage maybeIdentifier maybeRepository =
     let
-        newInput =  {query = maybeQuery, language = maybeLanguage, identifier = maybeIdentifier}
+        newInput =  {query = maybeQuery, language = maybeLanguage, identifier = maybeIdentifier, repository = maybeRepository}
         newModel = {model | input = newInput}
     in
         (newModel, Cmd.batch [fetchResults newModel, fetchIdentifiers newModel, fetchLanguages])
@@ -171,8 +181,11 @@ updateURL model =
      q3 = case model.input.identifier of
             Just(identifier) -> q2 ++ "&identifier=" ++ identifier
             Nothing -> q2
+     q4 = case model.input.repository of
+            Just(repository) -> q3 ++ "&repository=" ++ repository
+            Nothing -> q3
    in
-        newUrl q3
+        newUrl q4
 
 makeSearchAPIUrl : String -> Model -> String
 makeSearchAPIUrl query model =
@@ -188,6 +201,12 @@ makeSearchAPIUrl query model =
             case model.input.language of
                 Nothing -> url
                 Just t -> if t == "any" then url else url ++ "&language=" ++ t
+        )
+     |>
+        (\url ->
+            case model.input.repository of
+                Nothing -> url
+                Just t -> if t == "" then url else url ++ "&repository=" ++ t
         )
 
 
@@ -208,22 +227,37 @@ searchInputElem model =
 
 searchView: Model -> Html Msg
 searchView model =
-    div [ class "black-80 pa4 bg-washed-yellow" ] [
-        div [ class "flex flex-wrap" ] [
-            div [ class "w-100 pr2 pb2" ] [
-               searchInputElem model
-            ],
-            div [ class "w-20 pr2 pb2" ] [
-               select[class "select w-100", on "change" (Decode.map ChangeLanguage Html.Events.targetValue)   ](maybeSearchLanguageOptions model.languages)
-            ],
-            div [ class "w-20 pr2 pb2" ] [
-               select[class "select w-100", on "change" (Decode.map ChangeIdentifier Html.Events.targetValue) ](maybeSearchIdentifierOptions model.identifiers)
+    let
+        repository = case model.input.repository of
+                        Just(r) -> r
+                        Nothing -> ""
+
+    in
+        div [ class "black-80 pa4 bg-washed-yellow" ] [
+            div [ class "flex-ns flex-wrap-ns" ] [
+                div [ class "w-60-ns pr2 pb2" ] [
+                   searchInputElem model
+                ],
+                div [ class "w-40-ns pr2 pb2" ] [
+                                input [ class "input-reset ba b--black-20 w-100 pa2"
+
+                  , id "repository"
+                  , placeholder "Filter repository"
+                  , onInput RepositoryInputChanged
+                  , value repository] []]
+
+                ,div [ class "w-20-ns pr2 pb2" ] [
+                   select[class "select w-100", on "change" (Decode.map ChangeLanguage Html.Events.targetValue)   ](maybeSearchLanguageOptions model.languages)
+                ],
+                div [ class "w-20-ns pr2 pb2" ] [
+                   select[class "select w-100", on "change" (Decode.map ChangeIdentifier Html.Events.targetValue) ](maybeSearchIdentifierOptions model.identifiers)
+                ]
+
+              ]
+             , div[ class "flex-ns flex-wrap-ns" ] [
+                button [ class "f6 link dim ph3 pv2 mb2 dib white bg-black", onClick Search]
+                    [ text "Search" ]
             ]
-          ]
-         , div[ class "flex flex-wrap" ] [
-            button [ class "f6 link dim ph3 pv2 mb2 dib white bg-black", onClick Search]
-                [ text "Search" ]
-        ]
     ]
 
 maybeSearchIdentifierOptions : WebData (List String) -> List(Html Msg)
