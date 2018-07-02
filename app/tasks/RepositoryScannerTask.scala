@@ -20,21 +20,36 @@ import com.google.common.hash.Hashing
 
 class RepositoryScannerTask(actorSystem: ActorSystem, repo: SearchDataSource, implicit val ec: ExecutionContext) {
 
-  def scan(directory: String, repository: String) = {
+  def scan(directory: String, repository: String): Unit = {
 
+    def processFile(directory: String, path: Path, repository: String): Unit = {
 
-    def processFile(directory: String, path: Path, repository: String) = {
-      Logger.info("Indexing file at path: %s for repository: %s".format(path.toString, repository))
+      def index(checksum:String, id: String, repository: String, filename: String, content: String): Unit = {
+        Logger.info("Indexing file at path: %s for repository: %s".format(path.toString, repository))
+        repo.indexCode(CodeSourceModel(id, repository, filename, content)) match {
+          case Left(failure) => Logger.warn(failure.toString)
+          case Right(_) =>
+            repo.updateChecksumById(id, checksum)
+        }
+      }
+
       val content = readFile(path)
       val filename = path.normalize.toString.stripPrefix(directory).stripPrefix("/")
       val id = Hashing.sha256.hashString(repository + "/" + path.toString, Charsets.UTF_8).toString
+
       content match {
         case Some(s) =>
-          repo.indexCode(new CodeSourceModel(id, repository, filename, s)) match {
-            case Left(failure) => Logger.warn(failure.toString)
-            case Right(_) =>
+          val contentChecksum = Hashing.sha256.hashString(s, Charsets.UTF_8).toString
+          repo.getChecksumById(id) match {
+            case Left(failure) =>
+              index(contentChecksum, id, repository, filename, s)
+            case Right(data) =>
+              if (data == contentChecksum)
+                Logger.debug("Skipping as no changes for file at path: %s for repository: %s".format(path.toString, repository))
+              else index(contentChecksum, id, repository, filename, s)
           }
         case None =>
+          Logger.warn("Reading file failed: %s".format(filename))
       }
     }
 

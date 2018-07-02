@@ -33,3 +33,18 @@ curl -XPUT localhost:9200/codesearch -d '
     }
   }
 }'
+
+curl -XDELETE localhost:9200/status 
+curl -XPUT localhost:9200/status -d '
+{
+  "mappings": {
+    "status": {
+      "properties": {
+        "checksum": {
+          "type": "string",
+          "index": "not_analyzed"
+       }
+      }
+    }
+  }
+}'

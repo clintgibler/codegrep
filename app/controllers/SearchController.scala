@@ -24,7 +24,7 @@ class SearchController (cc: ControllerComponents, repo: SearchDataSource) extend
    }
   }
   def languages() = Action { implicit request: Request[AnyContent] => {
-    var res = repo.getAvailableLanguages()
+    var res = repo.getAvailableLanguages
     res match {
       case Left(failure) => NotFound(failure.toString)
       case Right(res: Seq[String]) => {

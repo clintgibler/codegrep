@@ -34,13 +34,12 @@ object CodeEncoder {
     val detector = new Tika
     val ext = """.*\.(\w+)$""".r
     source.filename match {
-      case ext(fileType) => {
+      case ext(fileType) =>
         fileType match {
           case "java" => Right(new CodeModel(source.id,source.filename,source.repository,source.content, "java", JavaCodeEncoder.parse(source.content)))
           case "go" => Right(new CodeModel(source.id,source.filename,source.repository,source.content, "go", GolangCodeEncoder.parse(source.content)))
           case _ => Left(CodeEncoderError.OperationFailed("Unknown file extension for file:%s".format(source.filename)))
         }
-      }
       case _ => Left(CodeEncoderError.OperationFailed("Unknown file extension for file:%s".format(source.filename)))
     }
   }

@@ -22,7 +22,7 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
       hit.sourceField("content").toString.slice(0, 600)
     }
 
-    new SearchResultModel(id = hit.id,
+     SearchResultModel(id = hit.id,
       filename = hit.sourceField("filename").toString,
       repository = hit.sourceField("repository").toString,
       content = hit.sourceField("content").toString,
@@ -31,7 +31,7 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
 
   // TODO(syam): Get these from elasticsearch
   override def getAvailableLanguages(): Either[SearchDataSourceError, Seq[String]] = {
-    return Right("go" :: "java" :: "text" :: Nil)
+     Right("go" :: "java" :: "text" :: Nil)
   }
 
   // TODO(syam): Get these from elasticsearch
@@ -40,14 +40,14 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
     val go = "variable" :: "type" :: "function" :: "method" :: default
     val java = "variable" :: "package" :: "import" :: "class" :: "variable" :: "method" :: "enum" :: "interface" :: "annotation" :: default
     language match {
-      case "go" => return Right(go)
-      case "java" => return Right(java)
-      case _ => return Right(default)
+      case "go" => Right(go)
+      case "java" => Right(java)
+      case _ =>  Right(default)
     }
   }
 
   def hitToSearchRepositoryModel(hit: SearchHit): RepositoryModel = {
-    new RepositoryModel(repository = hit.sourceField("repository").toString, path = hit.sourceField("path").toString)
+     RepositoryModel(repository = hit.sourceField("repository").toString, path = hit.sourceField("path").toString)
   }
 
   override def initialize(): Either[SearchDataSourceError, Unit] = {
@@ -60,10 +60,9 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
     }.await
 
     var ret: Either[SearchDataSourceError, Unit] = resp match {
-      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString()))
-      case Right(_) => {
+      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
+      case Right(_) =>
         Right(())
-      }
     }
     ret
   }
@@ -74,17 +73,34 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
       get(id).from(indexName)
     }.await
 
-    var ret: Either[SearchDataSourceError, String] = resp match {
-      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString()))
-      case Right(resp) => {
-        if (!resp.result.found) {
+    val ret: Either[SearchDataSourceError, String] = resp match {
+      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
+      case Right(data) => {
+        if (!data.result.found) {
           return Left(SearchDataSourceError.OperationFailed("Not found"))
 
         }
-        Right(resp.result.sourceAsString)
+        Right(data.result.sourceAsString)
       }
     }
-    return ret
+    ret
+  }
+
+  override def getChecksumById(id: String): Either[SearchDataSourceError, String] = {
+    import com.sksamuel.elastic4s.http.ElasticDsl._
+    val resp = client.execute {
+      get(id).from("status")
+    }.await
+
+    val ret: Either[SearchDataSourceError, String] = resp match {
+      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
+      case Right(data) =>
+        if (!data.result.found) {
+          return Left(SearchDataSourceError.OperationFailed("Not found"))
+        }
+        Right(data.result.sourceAsMap("checksum").toString)
+    }
+    ret
   }
 
   override def getDocumentByTerm(queryString: Map[String, Seq[String]]): Either[SearchDataSourceError, Seq[SearchResultModel]] = {
@@ -95,7 +111,7 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
     var nested = nestedQuery("tokens")
 
     queryString.foreach {
-      case (k, v) => {
+      case (k, v) =>
         k match {
           case "content" =>
             queries = termQuery("content", v.mkString.toLowerCase()) :: queries
@@ -103,18 +119,17 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
           // We store "repository" field both analyzed (ie tokenized on whitespace) and as exact string
           // This allows us to match both exact url or just a part of url
           case "repository" =>
-              queries =
-                boolQuery().should(
-                  termQuery("repository", v.mkString.toLowerCase()),
-                  termQuery("repository.raw", v.mkString.toLowerCase())
-                ).minimumShouldMatch(1) :: queries
+            queries =
+              boolQuery().should(
+                termQuery("repository", v.mkString.toLowerCase()),
+                termQuery("repository.raw", v.mkString.toLowerCase())
+              ).minimumShouldMatch(1) :: queries
           case "tokens.text" =>
             nestedQueries = termQuery(k, v.mkString) :: nestedQueries
           case "tokens.type" =>
             nestedQueries = termQuery(k, v.mkString) :: nestedQueries
           case _ =>
         }
-      }
     }
 
     queries = nested.query(boolQuery().must(nestedQueries)) :: queries
@@ -125,10 +140,22 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
 
     var ret: Either[SearchDataSourceError, Seq[SearchResultModel]] = resp match {
       case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
-      case Right(resp) => {
-        var ret = resp.result.hits.hits.map((hit) => hitToSearchDocumentModel(hit))
+      case Right(data) => {
+        var ret = data.result.hits.hits.map((hit) => hitToSearchDocumentModel(hit))
         Right(ret)
       }
+    }
+    ret
+  }
+
+  override def updateChecksumById(id: String, checksum: String): Either[SearchDataSourceError, Unit] = {
+    import com.sksamuel.elastic4s.http.ElasticDsl._
+    import io.circe.Json
+    val json = Json.obj(("checksum", Json.fromString(checksum)))
+    val resp = client.execute(update(id).in("status" / "status").docAsUpsert(json.toString)).await
+    var ret: Either[SearchDataSourceError, Unit] = resp match {
+      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
+      case Right(_) => Right(())
     }
     ret
   }
@@ -147,12 +174,12 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
       }
     }
   }
-
+  // TODO(syam): Convert this to scroll based API
   override def getAvailableRepositories(): Either[SearchDataSourceError, Seq[RepositoryModel]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
 
     val resp = client.execute {
-      search("repositories")
+      search("repositories").size(i = 100000)
     }.await
 
     var ret: Either[SearchDataSourceError, Seq[RepositoryModel]] = resp match {
