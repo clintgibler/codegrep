@@ -11,7 +11,7 @@ class CodeModel(val id: String, val filename: String, val repository: String, va
         ("text", Json.fromString(token.text)),
         ("line", Json.fromInt(token.line)),
         ("char", Json.fromInt(token.char)),
-        ("tokenType", Json.fromString(token.tokenType)))
+        ("type", Json.fromString(token.tokenType)))
     }
 
     implicit val encodeFoo: Encoder[CodeModel] = new Encoder[CodeModel] {
