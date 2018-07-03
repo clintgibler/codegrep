@@ -10,7 +10,7 @@ class DocumentController (cc: ControllerComponents, repo: SearchDataSource) exte
     val res = repo.getDocumentById(id)
     res match {
       case Left(failure) => NotFound(failure.toString)
-      case Right(document) => Ok(document.toString())
+      case Right(document) => Ok(document.toString)
     }
   }
   }

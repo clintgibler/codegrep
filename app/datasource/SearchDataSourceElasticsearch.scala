@@ -10,7 +10,7 @@ import models._
 import encoder.CodeEncoder
 import play.api.Logger
 
-abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: String)
+class SearchDataSourceElasticsearch(client: HttpClient)
   extends SearchDataSource {
 
   def hitToSearchDocumentModel(hit: SearchHit): SearchResultModel = {
@@ -70,7 +70,7 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
   override def getDocumentById(id: String): Either[SearchDataSourceError, String] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
     val resp = client.execute {
-      get(id).from(indexName)
+      get(id).from("codesearch")
     }.await
 
     val ret: Either[SearchDataSourceError, String] = resp match {
@@ -135,7 +135,7 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
     queries = nested.query(boolQuery().must(nestedQueries)) :: queries
 
     val resp = client.execute {
-      search(indexName).query(boolQuery.must(queries)).highlighting(highlight("content").fragmentSize(300))
+      search("codesearch").query(boolQuery.must(queries)).highlighting(highlight("content").fragmentSize(300))
     }.await
 
     var ret: Either[SearchDataSourceError, Seq[SearchResultModel]] = resp match {
@@ -163,15 +163,14 @@ abstract class SearchDataSourceElasticsearch(client: HttpClient, indexName: Stri
   override def indexCode(source: CodeSourceModel): Either[SearchDataSourceError, Unit] = {
     CodeEncoder.from(source) match {
       case Left(failure) => Left(SearchDataSourceError.OperationFailed("Failed to encode: %s".format(failure.toString)))
-      case Right(code) => {
+      case Right(code) =>
         import com.sksamuel.elastic4s.http.ElasticDsl._
-        val resp = client.execute(update(code.id).in(indexName / "code").docAsUpsert(code.json())).await
+        val resp = client.execute(update(code.id).in("codesearch" / "code").docAsUpsert(code.json())).await
         var ret: Either[SearchDataSourceError, Unit] = resp match {
           case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
           case Right(_) => Right(())
         }
         ret
-      }
     }
   }
   // TODO(syam): Convert this to scroll based API

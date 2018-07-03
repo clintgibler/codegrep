@@ -2,7 +2,7 @@ package encoder
 
 import java.nio.file.Files
 
-import models.{CodeModel, CodeSourceModel}
+import models.{CodeModel, CodeSourceModel, TokenModel}
 import org.antlr.v4.runtime.Token
 import org.apache.tika.metadata.Metadata
 import org.apache.tika.Tika
@@ -10,7 +10,10 @@ import play.api.Logger
 
 
 abstract class CodeEncoder {
-  def parse(content: String): Map[String, Set[Token]]
+  def tokenToModel(token: Token, tokenType: String): TokenModel = {
+    TokenModel(text = token.getText, line = token.getLine, char = token.getCharPositionInLine, tokenType = tokenType)
+  }
+  def parse(content: String): List[TokenModel]
 }
 
 sealed trait CodeEncoderError
@@ -19,6 +22,7 @@ object CodeEncoderError {
 }
 
 object CodeEncoder {
+
   def from(source: CodeSourceModel): Either[CodeEncoderError, CodeModel] = {
 
     // Todo: this needs work - almost all files are detected as octetstream - wtf

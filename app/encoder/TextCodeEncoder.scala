@@ -1,9 +1,9 @@
 package encoder
 
-import org.antlr.v4.runtime.Token
+import models.TokenModel
 
 object TextCodeEncoder extends CodeEncoder{
-  override def parse(content: String): Map[String, Set[Token]] = {
-    Map.empty
+  override def parse(content: String): List[TokenModel] = {
+    List.empty
   }
 }
