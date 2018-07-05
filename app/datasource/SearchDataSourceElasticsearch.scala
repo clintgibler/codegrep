@@ -42,7 +42,7 @@ class SearchDataSourceElasticsearch(client: HttpClient)
     }
   }
 
-  override def getChecksumById(id: String)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, String]] = {
+  override def getChecksumById(id: String)(implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, String]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
     client.execute {
       get(id).from("status")
@@ -108,7 +108,7 @@ class SearchDataSourceElasticsearch(client: HttpClient)
     }
   }
 
-  override def updateChecksumById(id: String, checksum: String)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Unit]] = {
+  override def updateChecksumById(id: String, checksum: String)(implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, Unit]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
     import io.circe.Json
     val json = Json.obj(("checksum", Json.fromString(checksum)))
@@ -118,7 +118,7 @@ class SearchDataSourceElasticsearch(client: HttpClient)
     }
   }
 
-  override def indexCode(source: CodeSourceModel)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Unit]] = {
+  override def indexCode(source: CodeSourceModel)(implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, Unit]] = {
     CodeEncoder.from(source) match {
       case Left(failure) => Future {
         Left(SearchDataSourceError.OperationFailed("Failed to encode: %s".format(failure.toString)))
@@ -133,7 +133,7 @@ class SearchDataSourceElasticsearch(client: HttpClient)
   }
 
   // TODO(syam): Convert this to scroll based API
-  override def getAvailableRepositories(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Seq[RepositoryModel]]] = {
+  override def getAvailableRepositories(implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, Seq[RepositoryModel]]] = {
 
     def hitToSearchRepositoryModel(hit: SearchHit): RepositoryModel = {
       RepositoryModel(repository = hit.sourceField("repository").toString, path = hit.sourceField("path").toString)

@@ -13,12 +13,16 @@ abstract class CodeEncoder {
   def tokenToModel(token: Token, tokenType: String): TokenModel = {
     TokenModel(text = token.getText, line = token.getLine, char = token.getCharPositionInLine, tokenType = tokenType)
   }
+
   def parse(content: String): List[TokenModel]
 }
 
 sealed trait CodeEncoderError
+
 object CodeEncoderError {
+
   final case class OperationFailed(msg: String) extends CodeEncoderError
+
 }
 
 object CodeEncoder {
@@ -29,10 +33,10 @@ object CodeEncoder {
     def fromUnknownExt(detector: Tika, source: CodeSourceModel): Either[CodeEncoderError, CodeModel] = {
       val mtype = detector.detect(source.content)
       Logger.info("Filetype: %s, %s".format(source.filename, mtype))
-      if(mtype != "text/plain")
+      if (mtype != "text/plain")
         Left(CodeEncoderError.OperationFailed("Unknown file type for file:%s".format(source.filename)))
       else
-        Right(new CodeModel(source.id,source.filename,source.repository,source.content, "text", TextCodeEncoder.parse(source.content)))
+        Right(new CodeModel(source.id, source.filename, source.repository, source.content, "text", TextCodeEncoder.parse(source.content)))
     }
 
     val detector = new Tika
@@ -40,8 +44,8 @@ object CodeEncoder {
     source.filename match {
       case ext(fileType) =>
         fileType match {
-          case "java" => Right(new CodeModel(source.id,source.filename,source.repository,source.content, "java", JavaCodeEncoder.parse(source.content)))
-          case "go" => Right(new CodeModel(source.id,source.filename,source.repository,source.content, "go", GolangCodeEncoder.parse(source.content)))
+          case "java" => Right(new CodeModel(source.id, source.filename, source.repository, source.content, "java", JavaCodeEncoder.parse(source.content)))
+          case "go" => Right(new CodeModel(source.id, source.filename, source.repository, source.content, "go", GolangCodeEncoder.parse(source.content)))
           case _ => Left(CodeEncoderError.OperationFailed("Unknown file extension for file:%s".format(source.filename)))
         }
       case _ => Left(CodeEncoderError.OperationFailed("Unknown file extension for file:%s".format(source.filename)))

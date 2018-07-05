@@ -8,7 +8,7 @@ import play.api.libs.json.{JsObject, JsValue}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class IndexController(cc: ControllerComponents, repo: SearchDataSource, config: Configuration) (implicit ec: ExecutionContext)  extends AbstractController(cc) {
+class IndexController(cc: ControllerComponents, repo: SearchDataSource, config: Configuration)(implicit ec: ExecutionContext) extends AbstractController(cc) {
   def index() = Action.async { implicit request: Request[AnyContent] => {
 
     def jsonToModel(json: Option[JsValue]): CodeSourceModel = {

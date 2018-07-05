@@ -20,7 +20,7 @@ class RepositoryScannerTask(actorSystem: ActorSystem, repo: SearchDataSource)(im
 
     def processFile(directory: String, path: Path, repository: String): Unit = {
 
-      def index(checksum:String, id: String, repository: String, filename: String, content: String): Unit = {
+      def index(checksum: String, id: String, repository: String, filename: String, content: String): Unit = {
         Logger.info("Indexing file at path: %s for repository: %s".format(path.toString, repository))
         repo.indexCode(CodeSourceModel(id, repository, filename, content)) foreach {
           case Left(failure) => Logger.warn(failure.toString)
@@ -61,7 +61,7 @@ class RepositoryScannerTask(actorSystem: ActorSystem, repo: SearchDataSource)(im
   }
 
   actorSystem.scheduler.schedule(initialDelay = 1.seconds, interval = 5.minutes) {
-    repo.getAvailableRepositories foreach  {
+    repo.getAvailableRepositories foreach {
       case Left(err) => Logger.error("Error retrieving list of repositories: %s".format(err.toString))
       case Right(res) => res.foreach((r) => scan(r.path, r.repository))
     }
