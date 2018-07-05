@@ -1,37 +1,20 @@
 package datasource
 
-import com.sksamuel.elastic4s.ElasticsearchClientUri
 import com.sksamuel.elastic4s.http.HttpClient
-import com.sksamuel.elastic4s.http.search.{SearchHit, SearchResponse}
-import com.sksamuel.elastic4s.searches.{Highlight, HighlightFieldDefinition}
-import com.sksamuel.elastic4s.searches.queries.{NestedQueryDefinition, QueryDefinition}
-import com.sksamuel.elastic4s.searches.queries.term.TermQueryDefinition
-import models._
+import com.sksamuel.elastic4s.http.search.SearchHit
+import com.sksamuel.elastic4s.searches.queries.QueryDefinition
 import encoder.CodeEncoder
-import play.api.Logger
+import models._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class SearchDataSourceElasticsearch(client: HttpClient)
   extends SearchDataSource {
 
-  def hitToSearchDocumentModel(hit: SearchHit): SearchResultModel = {
-    // Hate nulls
-    val highlight = if (hit.highlight != null && hit.highlight.contains("content")) {
-      hit.highlight("content").mkString
-    }
-    else {
-      hit.sourceField("content").toString.slice(0, 600)
-    }
-
-     SearchResultModel(id = hit.id,
-      filename = hit.sourceField("filename").toString,
-      repository = hit.sourceField("repository").toString,
-      content = hit.sourceField("content").toString,
-      highlight = highlight)
-  }
 
   // TODO(syam): Get these from elasticsearch
-  override def getAvailableLanguages(): Either[SearchDataSourceError, Seq[String]] = {
-     Right("go" :: "java" :: "text" :: Nil)
+  override def getAvailableLanguages: Either[SearchDataSourceError, Seq[String]] = {
+    Right("go" :: "java" :: "text" :: Nil)
   }
 
   // TODO(syam): Get these from elasticsearch
@@ -42,68 +25,52 @@ class SearchDataSourceElasticsearch(client: HttpClient)
     language match {
       case "go" => Right(go)
       case "java" => Right(java)
-      case _ =>  Right(default)
+      case _ => Right(default)
     }
   }
 
-  def hitToSearchRepositoryModel(hit: SearchHit): RepositoryModel = {
-     RepositoryModel(repository = hit.sourceField("repository").toString, path = hit.sourceField("path").toString)
-  }
-
-  override def initialize(): Either[SearchDataSourceError, Unit] = {
+  override def getDocumentById(id: String)(implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, String]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
-
-    val resp = client.execute {
-      createIndex("datasource").mappings(
-        mapping("repository").fields(textField("url"), textField("path"))
-      )
-    }.await
-
-    var ret: Either[SearchDataSourceError, Unit] = resp match {
-      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
-      case Right(_) =>
-        Right(())
-    }
-    ret
-  }
-
-  override def getDocumentById(id: String): Either[SearchDataSourceError, String] = {
-    import com.sksamuel.elastic4s.http.ElasticDsl._
-    val resp = client.execute {
+    client.execute {
       get(id).from("codesearch")
-    }.await
-
-    val ret: Either[SearchDataSourceError, String] = resp match {
-      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
-      case Right(data) => {
-        if (!data.result.found) {
-          return Left(SearchDataSourceError.OperationFailed("Not found"))
-
-        }
-        Right(data.result.sourceAsString)
-      }
+    }.map {
+      case Left(failure) =>
+        Left(SearchDataSourceError.OperationFailed(failure.toString))
+      case Right(data) =>
+        if (!data.result.found) Left(SearchDataSourceError.OperationFailed("Not found"))
+        else Right(data.result.sourceAsString)
     }
-    ret
   }
 
-  override def getChecksumById(id: String): Either[SearchDataSourceError, String] = {
+  override def getChecksumById(id: String)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, String]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
-    val resp = client.execute {
+    client.execute {
       get(id).from("status")
-    }.await
-
-    val ret: Either[SearchDataSourceError, String] = resp match {
+    }.map {
       case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
       case Right(data) =>
-        if (!data.result.found) {
-          return Left(SearchDataSourceError.OperationFailed("Not found"))
-        }
-        Right(data.result.sourceAsMap("checksum").toString)
+        if (!data.result.found) Left(SearchDataSourceError.OperationFailed("Not found"))
+        else Right(data.result.sourceAsMap("checksum").toString)
     }
-    ret
   }
 
-  override def getDocumentByTerm(queryString: Map[String, Seq[String]]): Either[SearchDataSourceError, Seq[SearchResultModel]] = {
+  override def getDocumentByTerm(queryString: Map[String, Seq[String]])(implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, Seq[SearchResultModel]]] = {
+    def hitToSearchDocumentModel(hit: SearchHit): SearchResultModel = {
+      // Hate nulls
+      val highlight = if (hit.highlight != null && hit.highlight.contains("content")) {
+        hit.highlight("content").mkString
+      }
+      else {
+        hit.sourceField("content").toString.slice(0, 600)
+      }
+
+      SearchResultModel(id = hit.id,
+        filename = hit.sourceField("filename").toString,
+        repository = hit.sourceField("repository").toString,
+        content = hit.sourceField("content").toString,
+        highlight = highlight)
+    }
+
     import com.sksamuel.elastic4s.http.ElasticDsl._
 
     var queries: List[QueryDefinition] = List()
@@ -131,63 +98,54 @@ class SearchDataSourceElasticsearch(client: HttpClient)
           case _ =>
         }
     }
-
     queries = nested.query(boolQuery().must(nestedQueries)) :: queries
 
-    val resp = client.execute {
+    client.execute {
       search("codesearch").query(boolQuery.must(queries)).highlighting(highlight("content").fragmentSize(300))
-    }.await
-
-    var ret: Either[SearchDataSourceError, Seq[SearchResultModel]] = resp match {
+    }.map {
       case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
-      case Right(data) => {
-        var ret = data.result.hits.hits.map((hit) => hitToSearchDocumentModel(hit))
-        Right(ret)
-      }
+      case Right(data) => Right(data.result.hits.hits.map((hit) => hitToSearchDocumentModel(hit)))
     }
-    ret
   }
 
-  override def updateChecksumById(id: String, checksum: String): Either[SearchDataSourceError, Unit] = {
+  override def updateChecksumById(id: String, checksum: String)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Unit]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
     import io.circe.Json
     val json = Json.obj(("checksum", Json.fromString(checksum)))
-    val resp = client.execute(update(id).in("status" / "status").docAsUpsert(json.toString)).await
-    var ret: Either[SearchDataSourceError, Unit] = resp match {
+    client.execute(update(id).in("status" / "status").docAsUpsert(json.toString)).map {
       case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
       case Right(_) => Right(())
     }
-    ret
   }
 
-  override def indexCode(source: CodeSourceModel): Either[SearchDataSourceError, Unit] = {
+  override def indexCode(source: CodeSourceModel)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Unit]] = {
     CodeEncoder.from(source) match {
-      case Left(failure) => Left(SearchDataSourceError.OperationFailed("Failed to encode: %s".format(failure.toString)))
+      case Left(failure) => Future {
+        Left(SearchDataSourceError.OperationFailed("Failed to encode: %s".format(failure.toString)))
+      }
       case Right(code) =>
         import com.sksamuel.elastic4s.http.ElasticDsl._
-        val resp = client.execute(update(code.id).in("codesearch" / "code").docAsUpsert(code.json())).await
-        var ret: Either[SearchDataSourceError, Unit] = resp match {
+        client.execute(update(code.id).in("codesearch" / "code").docAsUpsert(code.json())).map {
           case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
           case Right(_) => Right(())
         }
-        ret
     }
   }
+
   // TODO(syam): Convert this to scroll based API
-  override def getAvailableRepositories(): Either[SearchDataSourceError, Seq[RepositoryModel]] = {
-    import com.sksamuel.elastic4s.http.ElasticDsl._
+  override def getAvailableRepositories(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Seq[RepositoryModel]]] = {
 
-    val resp = client.execute {
-      search("repositories").size(i = 100000)
-    }.await
-
-    var ret: Either[SearchDataSourceError, Seq[RepositoryModel]] = resp match {
-      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
-      case Right(data) =>
-        var ret = data.result.hits.hits.map((hit) => hitToSearchRepositoryModel(hit))
-        Right(ret)
+    def hitToSearchRepositoryModel(hit: SearchHit): RepositoryModel = {
+      RepositoryModel(repository = hit.sourceField("repository").toString, path = hit.sourceField("path").toString)
     }
-    ret
+
+    import com.sksamuel.elastic4s.http.ElasticDsl._
+    client.execute {
+      search("repositories").size(i = 100000)
+    }.map {
+      case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
+      case Right(data) => Right(data.result.hits.hits.map((hit) => hitToSearchRepositoryModel(hit)))
+    }
   }
 
 }

@@ -6,7 +6,7 @@ import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Environment, Mode}
 import datasource.{SearchDataSource, SearchDataSourceElasticsearch}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait ElasticsearchComponents {
 

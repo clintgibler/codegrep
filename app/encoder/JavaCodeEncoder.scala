@@ -18,31 +18,38 @@ object JavaCodeEncoder extends CodeEncoder {
       }
 
       override def enterSingleStaticImportDeclaration(ctx: Java8Parser.SingleStaticImportDeclarationContext): Unit = {
-        tokens += tokenToModel(ctx.Identifier().getSymbol, "import")
+        if (ctx.Identifier() != null)
+          tokens += tokenToModel(ctx.Identifier().getSymbol, "import")
       }
 
       override def enterNormalClassDeclaration(ctx: Java8Parser.NormalClassDeclarationContext): Unit = {
-        tokens += tokenToModel(ctx.Identifier().getSymbol, "class")
+        if (ctx.Identifier() != null)
+          tokens += tokenToModel(ctx.Identifier().getSymbol, "class")
       }
 
       override def enterVariableDeclaratorId(ctx: Java8Parser.VariableDeclaratorIdContext): Unit = {
-        tokens += tokenToModel(ctx.Identifier().getSymbol, "variable")
+        if (ctx.Identifier() != null)
+          tokens += tokenToModel(ctx.Identifier().getSymbol, "variable")
       }
 
       override def enterMethodDeclarator(ctx: Java8Parser.MethodDeclaratorContext): Unit = {
-        tokens += tokenToModel(ctx.Identifier().getSymbol, "method")
+        if (ctx.Identifier() != null)
+          tokens += tokenToModel(ctx.Identifier().getSymbol, "method")
       }
 
       override def enterEnumDeclaration(ctx: Java8Parser.EnumDeclarationContext): Unit = {
-        tokens += tokenToModel(ctx.Identifier().getSymbol, "enum")
+        if (ctx.Identifier() != null)
+          tokens += tokenToModel(ctx.Identifier().getSymbol, "enum")
       }
 
       override def enterNormalInterfaceDeclaration(ctx: Java8Parser.NormalInterfaceDeclarationContext): Unit = {
-        tokens += tokenToModel(ctx.Identifier().getSymbol, "interface")
+        if (ctx.Identifier() != null)
+          tokens += tokenToModel(ctx.Identifier().getSymbol, "interface")
       }
 
       override def enterAnnotationTypeElementDeclaration(ctx: Java8Parser.AnnotationTypeElementDeclarationContext): Unit = {
-        tokens += tokenToModel(ctx.Identifier().getSymbol, "annotation")
+        if (ctx.Identifier() != null)
+          tokens += tokenToModel(ctx.Identifier().getSymbol, "annotation")
       }
 
     }, parser.compilationUnit)

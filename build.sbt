@@ -19,6 +19,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-parser"
 ).map(_ % circeVersion)
 
+libraryDependencies += ws
 libraryDependencies += "org.antlr" % "antlr4" % "4.7.1"
 libraryDependencies += "org.apache.tika" % "tika-core" % "1.18"
 

@@ -2,6 +2,8 @@ package datasource
 
 import models._
 
+import scala.concurrent.{ExecutionContext, Future}
+
 sealed trait SearchDataSourceError
 
 object SearchDataSourceError {
@@ -9,13 +11,12 @@ object SearchDataSourceError {
 }
 
 trait SearchDataSource {
-  def initialize: Either[SearchDataSourceError,Unit]
-	def getDocumentById(id: String): Either[SearchDataSourceError, String]
-  def getDocumentByTerm(query: Map[String,Seq[String]]): Either[SearchDataSourceError, Seq[SearchResultModel]]
   def getAvailableLanguages: Either[SearchDataSourceError, Seq[String]]
   def getAvailableIdentifiers(language: String): Either[SearchDataSourceError, Seq[String]]
-  def getAvailableRepositories: Either[SearchDataSourceError, Seq[RepositoryModel]]
-  def getChecksumById(id: String): Either[SearchDataSourceError, String]
-  def updateChecksumById(id: String, checksum: String): Either[SearchDataSourceError, Unit]
-  def indexCode(source: CodeSourceModel): Either[SearchDataSourceError, Unit]
+  def getAvailableRepositories(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Seq[RepositoryModel]]]
+  def getChecksumById(id: String)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, String]]
+  def getDocumentById(id: String)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, String]]
+  def getDocumentByTerm(query: Map[String,Seq[String]])(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Seq[SearchResultModel]]]
+  def updateChecksumById(id: String, checksum: String)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Unit]]
+  def indexCode(source: CodeSourceModel)(implicit ec:ExecutionContext): Future[Either[SearchDataSourceError, Unit]]
 }

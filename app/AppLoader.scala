@@ -1,13 +1,15 @@
 import akka.actor.ActorSystem
+import akka.dispatch.MessageDispatcher
 import components.ElasticsearchComponents
 import controllers._
 import play.api.ApplicationLoader.Context
 import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext, Logger}
 import play.filters.HttpFiltersComponents
 import router.Routes
-import tasks.{InitializeDataSourceTask, RepositoryScannerTask}
+import tasks.RepositoryScannerTask
 
 import scala.concurrent.ExecutionContext
+
 
 
 class AppLoader extends ApplicationLoader {
@@ -27,11 +29,15 @@ class AppComponents(context: Context)
   lazy val searchController = new SearchController(controllerComponents, documentsRepository)
   lazy val documentController = new DocumentController(controllerComponents, documentsRepository)
   lazy val indexController = new IndexController(controllerComponents, documentsRepository, configuration)
-  lazy val router = new Routes(httpErrorHandler, assets, versionController,searchController, documentController, indexController)
+  lazy val repositoryController = new RepositoryController(controllerComponents, documentsRepository)
+  lazy val router = new Routes(httpErrorHandler, assets, versionController,searchController, documentController, indexController, repositoryController)
 
   if(configuration.get[Boolean]("node.crawler")) {
     Logger.info("Starting crawler")
-    new RepositoryScannerTask(actorSystem, documentsRepository, actorSystem.dispatchers.lookup("crawler.thread-pool"))
+    // Repository scanner uses internal indexer methods and hence we pass it indexer pool
+    // TODO: change the crawler to use HTTP api
+    val ec: ExecutionContext = actorSystem.dispatchers.lookup("indexer.thread-pool")
+    new RepositoryScannerTask(actorSystem, documentsRepository)(ec)
   }
 
 }

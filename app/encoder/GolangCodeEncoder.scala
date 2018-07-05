@@ -17,15 +17,18 @@ object GolangCodeEncoder extends CodeEncoder {
       }
 
       override def enterTypeSpec(ctx: GolangParser.TypeSpecContext): Unit = {
-        tokens += tokenToModel(ctx.IDENTIFIER().getSymbol,"type")
+        if (ctx.IDENTIFIER() != null)
+          tokens += tokenToModel(ctx.IDENTIFIER().getSymbol, "type")
       }
 
       override def enterFunctionDecl(ctx: GolangParser.FunctionDeclContext): Unit = {
-        tokens += tokenToModel(ctx.IDENTIFIER().getSymbol,"function")
+        if (ctx.IDENTIFIER() != null)
+          tokens += tokenToModel(ctx.IDENTIFIER().getSymbol, "function")
       }
 
       override def enterMethodDecl(ctx: GolangParser.MethodDeclContext): Unit = {
-        tokens += tokenToModel(ctx.IDENTIFIER().getSymbol, "method")
+        if (ctx.IDENTIFIER() != null)
+          tokens += tokenToModel(ctx.IDENTIFIER().getSymbol, "method")
       }
 
       override def enterVarDecl(ctx: GolangParser.VarDeclContext): Unit = {

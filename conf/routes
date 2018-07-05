@@ -23,6 +23,6 @@ GET      /api/document/:id          controllers.DocumentController.document(id: 
 
 POST     /api/index                 controllers.IndexController.index
 
-#GET      /api/repository            controllers.RepositoryController.list
+GET      /api/repository            controllers.RepositoryController.list
 #POST     /api/repository/add        controllers.RepositoryController.add
 #POST     /api/repository/delete     controllers.RepositoryController.delete

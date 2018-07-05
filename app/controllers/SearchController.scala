@@ -1,46 +1,40 @@
 package controllers
 
-import com.sksamuel.elastic4s.searches.queries.term.TermQueryDefinition
-import javax.inject._
+import datasource.SearchDataSource
+import io.circe.generic.auto._
+import io.circe.syntax._
+import models.SearchResultModel
 import play.api._
 import play.api.mvc._
-import datasource.SearchDataSource
-import models.SearchResultModel
 
-import scala.collection.JavaConverters._
-import scala.collection.immutable
-import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import scala.concurrent.ExecutionContext
 
-class SearchController (cc: ControllerComponents, repo: SearchDataSource) extends AbstractController(cc) {
-  def search() = Action { implicit request: Request[AnyContent] => {
+class SearchController(cc: ControllerComponents, repo: SearchDataSource)(implicit ec: ExecutionContext) extends AbstractController(cc) {
+  def search() = Action.async { implicit request: Request[AnyContent] => {
     Logger.info("Search request: address:%s parameters:%s".format(request.remoteAddress, request.rawQueryString))
-    var res = repo.getDocumentByTerm(request.queryString)
-    res match {
+    repo.getDocumentByTerm(request.queryString).map {
       case Left(failure) => NotFound(failure.toString)
       case Right(res: Seq[SearchResultModel]) => {
         Ok(res.asJson.toString)
       }
     }
-   }
   }
+  }
+
   def languages() = Action { implicit request: Request[AnyContent] => {
-    var res = repo.getAvailableLanguages
-    res match {
+    repo.getAvailableLanguages match {
       case Left(failure) => NotFound(failure.toString)
-      case Right(res: Seq[String]) => {
-        Ok(res.asJson.toString)
-      }
+      case Right(res: Seq[String]) => Ok(res.asJson.toString)
     }
   }
   }
 
   def identifiers(id: String) = Action { implicit request: Request[AnyContent] => {
-    val res = repo.getAvailableIdentifiers(id)
-    res match {
+    repo.getAvailableIdentifiers(id) match {
       case Left(failure) => NotFound(failure.toString)
       case Right(res) => Ok(res.asJson.toString)
     }
   }
   }
 
- }
+}
