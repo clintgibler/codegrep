@@ -33,14 +33,16 @@ object GolangCodeEncoder extends CodeEncoder {
 
       override def enterVarDecl(ctx: GolangParser.VarDeclContext): Unit = {
         ctx.varSpec().forEach((x) => {
-          x.identifierList().IDENTIFIER().forEach((i) => {
-            tokens += tokenToModel(i.getSymbol, "variable")
-          })
+          if (x.identifierList() != null)
+            x.identifierList().IDENTIFIER().forEach((i) => {
+              tokens += tokenToModel(i.getSymbol, "variable")
+            })
         })
       }
 
       override def enterFieldDecl(ctx: GolangParser.FieldDeclContext) {
-        ctx.identifierList().IDENTIFIER().forEach((i) => tokens += tokenToModel(i.getSymbol, "field"))
+        if (ctx.identifierList() != null)
+          ctx.identifierList().IDENTIFIER().forEach((i) => tokens += tokenToModel(i.getSymbol, "field"))
       }
 
     }, parser.sourceFile())

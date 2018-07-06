@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cd grammars-v4 || exit
+
+for grammar in $(ls -1 -d *)
+do
+  antlr4  -package parsers.$grammar -lib $grammar -o ../app/parsers/$grammar -Xexact-output-dir $grammar/*.g4
+done

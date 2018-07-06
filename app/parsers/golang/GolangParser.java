@@ -80,9 +80,9 @@ public class GolangParser extends Parser {
 
 	private static final String[] _LITERAL_NAMES = {
 		null, "'package'", "'import'", "'('", "')'", "'.'", "'const'", "'='", 
-		"','", "'type'", "';'", "'func'", "'var'", "'{'", "'}'", "'<-'", "'++'", 
-		"'--'", "'+'", "'-'", "'|'", "'^'", "'*'", "'/'", "'%'", "'<<'", "'>>'", 
-		"'&'", "'&^'", "':='", "':'", "'return'", "'break'", "'continue'", "'goto'", 
+		"','", "'type'", "'func'", "'var'", "'{'", "'}'", "'<-'", "'++'", "'--'", 
+		"'+'", "'-'", "'|'", "'^'", "'*'", "'/'", "'%'", "'<<'", "'>>'", "'&'", 
+		"'&^'", "':='", "';'", "':'", "'return'", "'break'", "'continue'", "'goto'", 
 		"'fallthrough'", "'defer'", "'if'", "'else'", "'switch'", "'case'", "'default'", 
 		"'select'", "'for'", "'range'", "'go'", "'['", "']'", "'interface'", "'map'", 
 		"'chan'", "'...'", "'struct'", "'||'", "'&&'", "'=='", "'!='", "'<'", 
@@ -185,6 +185,65 @@ public class GolangParser extends Parser {
 	                (type == TERMINATOR);
 	    }
 
+	     /**
+	     * Returns {@code true} if no line terminator exists between the specified
+	     * token offset and the prior one on the {@code HIDDEN} channel.
+	     *
+	     * @return {@code true} if no line terminator exists between the specified
+	     * token offset and the prior one on the {@code HIDDEN} channel.
+	     */
+	    private boolean noTerminatorBetween(int tokenOffset) {
+	        BufferedTokenStream stream = (BufferedTokenStream)_input;
+	        List<Token> tokens = stream.getHiddenTokensToLeft(stream.LT(tokenOffset).getTokenIndex());
+	        
+	        if (tokens == null) {
+	            return true;
+	        }
+
+	        for (Token token : tokens) {
+	            if (token.getText().contains("\n"))
+	                return false;
+	        }
+
+	        return true;
+	    }
+
+	     /**
+	     * Returns {@code true} if no line terminator exists after any encounterd
+	     * parameters beyond the specified token offset and the next on the
+	     * {@code HIDDEN} channel.
+	     *
+	     * @return {@code true} if no line terminator exists after any encounterd
+	     * parameters beyond the specified token offset and the next on the
+	     * {@code HIDDEN} channel.
+	     */
+	    private boolean noTerminatorAfterParams(int tokenOffset) {
+	        BufferedTokenStream stream = (BufferedTokenStream)_input;
+	        int leftParams = 1;
+	        int rightParams = 0;
+	        String value;
+
+	        if (stream.LT(tokenOffset).getText().equals("(")) {
+	            // Scan past parameters
+	            while (leftParams != rightParams) {
+	                tokenOffset++;
+	                value = stream.LT(tokenOffset).getText();
+
+	                if (value.equals("(")) {
+	                    leftParams++;
+	                }
+	                else if (value.equals(")")) {
+	                    rightParams++;
+	                }
+	            }
+
+	            tokenOffset++;
+	            return noTerminatorBetween(tokenOffset);
+	        }
+	        
+	        return true;
+	    }
+
 	public GolangParser(TokenStream input) {
 		super(input);
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
@@ -255,7 +314,7 @@ public class GolangParser extends Parser {
 			setState(217);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__5) | (1L << T__8) | (1L << T__10) | (1L << T__11))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__5) | (1L << T__8) | (1L << T__9) | (1L << T__10))) != 0)) {
 				{
 				{
 				setState(212);
@@ -613,7 +672,7 @@ public class GolangParser extends Parser {
 				typeDecl();
 				}
 				break;
-			case T__11:
+			case T__10:
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(251);
@@ -761,7 +820,7 @@ public class GolangParser extends Parser {
 				setState(270);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__14) | (1L << T__21) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << IDENTIFIER))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__13) | (1L << T__20) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << IDENTIFIER))) != 0)) {
 					{
 					setState(269);
 					type();
@@ -915,6 +974,12 @@ public class GolangParser extends Parser {
 		public TypeSpecContext typeSpec(int i) {
 			return getRuleContext(TypeSpecContext.class,i);
 		}
+		public List<EosContext> eos() {
+			return getRuleContexts(EosContext.class);
+		}
+		public EosContext eos(int i) {
+			return getRuleContext(EosContext.class,i);
+		}
 		public TypeDeclContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -960,7 +1025,7 @@ public class GolangParser extends Parser {
 					setState(295);
 					typeSpec();
 					setState(296);
-					match(T__9);
+					eos();
 					}
 					}
 					setState(302);
@@ -1058,7 +1123,7 @@ public class GolangParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(309);
-			match(T__10);
+			match(T__9);
 			setState(310);
 			match(IDENTIFIER);
 			setState(313);
@@ -1166,7 +1231,7 @@ public class GolangParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(318);
-			match(T__10);
+			match(T__9);
 			setState(319);
 			receiver();
 			setState(320);
@@ -1274,7 +1339,7 @@ public class GolangParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(327);
-			match(T__11);
+			match(T__10);
 			setState(339);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
@@ -1360,9 +1425,9 @@ public class GolangParser extends Parser {
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__2:
-			case T__10:
-			case T__14:
-			case T__21:
+			case T__9:
+			case T__13:
+			case T__20:
 			case T__45:
 			case T__47:
 			case T__48:
@@ -1435,11 +1500,11 @@ public class GolangParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(351);
-			match(T__12);
+			match(T__11);
 			setState(352);
 			statementList();
 			setState(353);
-			match(T__13);
+			match(T__12);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1490,7 +1555,7 @@ public class GolangParser extends Parser {
 			setState(360);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__5) | (1L << T__8) | (1L << T__9) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__30) | (1L << T__31) | (1L << T__32) | (1L << T__33) | (1L << T__34) | (1L << T__35) | (1L << T__36) | (1L << T__38) | (1L << T__41) | (1L << T__42) | (1L << T__44) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__5) | (1L << T__8) | (1L << T__9) | (1L << T__10) | (1L << T__11) | (1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__28) | (1L << T__30) | (1L << T__31) | (1L << T__32) | (1L << T__33) | (1L << T__34) | (1L << T__35) | (1L << T__36) | (1L << T__38) | (1L << T__41) | (1L << T__42) | (1L << T__44) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
 				{
 				{
 				setState(355);
@@ -1865,7 +1930,7 @@ public class GolangParser extends Parser {
 			setState(390);
 			expression(0);
 			setState(391);
-			match(T__14);
+			match(T__13);
 			setState(392);
 			expression(0);
 			}
@@ -1910,7 +1975,7 @@ public class GolangParser extends Parser {
 			expression(0);
 			setState(395);
 			_la = _input.LA(1);
-			if ( !(_la==T__15 || _la==T__16) ) {
+			if ( !(_la==T__14 || _la==T__15) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -2005,11 +2070,11 @@ public class GolangParser extends Parser {
 			setState(402);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__17) | (1L << T__18) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26) | (1L << T__27))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__16) | (1L << T__17) | (1L << T__18) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26))) != 0)) {
 				{
 				setState(401);
 				_la = _input.LA(1);
-				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__17) | (1L << T__18) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26) | (1L << T__27))) != 0)) ) {
+				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__16) | (1L << T__17) | (1L << T__18) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26))) != 0)) ) {
 				_errHandler.recoverInline(this);
 				}
 				else {
@@ -2065,7 +2130,7 @@ public class GolangParser extends Parser {
 			setState(406);
 			identifierList();
 			setState(407);
-			match(T__28);
+			match(T__27);
 			setState(408);
 			expressionList();
 			}
@@ -2103,7 +2168,7 @@ public class GolangParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(410);
-			match(T__9);
+			match(T__28);
 			}
 		}
 		catch (RecognitionException re) {
@@ -2466,7 +2531,7 @@ public class GolangParser extends Parser {
 				setState(437);
 				simpleStmt();
 				setState(438);
-				match(T__9);
+				match(T__28);
 				}
 				break;
 			}
@@ -2490,7 +2555,7 @@ public class GolangParser extends Parser {
 					ifStmt();
 					}
 					break;
-				case T__12:
+				case T__11:
 					{
 					setState(446);
 					block();
@@ -2614,14 +2679,14 @@ public class GolangParser extends Parser {
 				setState(456);
 				simpleStmt();
 				setState(457);
-				match(T__9);
+				match(T__28);
 				}
 				break;
 			}
 			setState(462);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
 				{
 				setState(461);
 				expression(0);
@@ -2629,7 +2694,7 @@ public class GolangParser extends Parser {
 			}
 
 			setState(464);
-			match(T__12);
+			match(T__11);
 			setState(468);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
@@ -2645,7 +2710,7 @@ public class GolangParser extends Parser {
 				_la = _input.LA(1);
 			}
 			setState(471);
-			match(T__13);
+			match(T__12);
 			}
 		}
 		catch (RecognitionException re) {
@@ -2805,14 +2870,14 @@ public class GolangParser extends Parser {
 				setState(483);
 				simpleStmt();
 				setState(484);
-				match(T__9);
+				match(T__28);
 				}
 				break;
 			}
 			setState(488);
 			typeSwitchGuard();
 			setState(489);
-			match(T__12);
+			match(T__11);
 			setState(493);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
@@ -2828,7 +2893,7 @@ public class GolangParser extends Parser {
 				_la = _input.LA(1);
 			}
 			setState(496);
-			match(T__13);
+			match(T__12);
 			}
 		}
 		catch (RecognitionException re) {
@@ -2875,7 +2940,7 @@ public class GolangParser extends Parser {
 				setState(498);
 				match(IDENTIFIER);
 				setState(499);
-				match(T__28);
+				match(T__27);
 				}
 				break;
 			}
@@ -3094,7 +3159,7 @@ public class GolangParser extends Parser {
 			setState(525);
 			match(T__41);
 			setState(526);
-			match(T__12);
+			match(T__11);
 			setState(530);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
@@ -3110,7 +3175,7 @@ public class GolangParser extends Parser {
 				_la = _input.LA(1);
 			}
 			setState(533);
-			match(T__13);
+			match(T__12);
 			}
 		}
 		catch (RecognitionException re) {
@@ -3289,7 +3354,7 @@ public class GolangParser extends Parser {
 				setState(550);
 				identifierList();
 				setState(551);
-				match(T__28);
+				match(T__27);
 				}
 				break;
 			}
@@ -3422,11 +3487,11 @@ public class GolangParser extends Parser {
 				break;
 			}
 			setState(568);
-			match(T__9);
+			match(T__28);
 			setState(570);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
 				{
 				setState(569);
 				expression(0);
@@ -3434,11 +3499,11 @@ public class GolangParser extends Parser {
 			}
 
 			setState(572);
-			match(T__9);
+			match(T__28);
 			setState(574);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__10) | (1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__28) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
 				{
 				setState(573);
 				simpleStmt();
@@ -3504,7 +3569,7 @@ public class GolangParser extends Parser {
 				setState(579);
 				identifierList();
 				setState(580);
-				match(T__28);
+				match(T__27);
 				}
 				break;
 			}
@@ -3604,9 +3669,9 @@ public class GolangParser extends Parser {
 				typeName();
 				}
 				break;
-			case T__10:
-			case T__14:
-			case T__21:
+			case T__9:
+			case T__13:
+			case T__20:
 			case T__45:
 			case T__47:
 			case T__48:
@@ -3963,7 +4028,7 @@ public class GolangParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(621);
-			match(T__21);
+			match(T__20);
 			setState(622);
 			type();
 			}
@@ -4009,32 +4074,34 @@ public class GolangParser extends Parser {
 	public final InterfaceTypeContext interfaceType() throws RecognitionException {
 		InterfaceTypeContext _localctx = new InterfaceTypeContext(_ctx, getState());
 		enterRule(_localctx, 124, RULE_interfaceType);
-		int _la;
 		try {
+			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(624);
 			match(T__47);
 			setState(625);
-			match(T__12);
+			match(T__11);
 			setState(631);
 			_errHandler.sync(this);
-			_la = _input.LA(1);
-			while (_la==IDENTIFIER) {
-				{
-				{
-				setState(626);
-				methodSpec();
-				setState(627);
-				eos();
-				}
+			_alt = getInterpreter().adaptivePredict(_input,53,_ctx);
+			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+				if ( _alt==1 ) {
+					{
+					{
+					setState(626);
+					methodSpec();
+					setState(627);
+					eos();
+					}
+					} 
 				}
 				setState(633);
 				_errHandler.sync(this);
-				_la = _input.LA(1);
+				_alt = getInterpreter().adaptivePredict(_input,53,_ctx);
 			}
 			setState(634);
-			match(T__13);
+			match(T__12);
 			}
 		}
 		catch (RecognitionException re) {
@@ -4179,13 +4246,13 @@ public class GolangParser extends Parser {
 				setState(647);
 				match(T__49);
 				setState(648);
-				match(T__14);
+				match(T__13);
 				}
 				break;
 			case 3:
 				{
 				setState(649);
-				match(T__14);
+				match(T__13);
 				setState(650);
 				match(T__49);
 				}
@@ -4208,8 +4275,11 @@ public class GolangParser extends Parser {
 
 	public static class MethodSpecContext extends ParserRuleContext {
 		public TerminalNode IDENTIFIER() { return getToken(GolangParser.IDENTIFIER, 0); }
-		public SignatureContext signature() {
-			return getRuleContext(SignatureContext.class,0);
+		public ParametersContext parameters() {
+			return getRuleContext(ParametersContext.class,0);
+		}
+		public ResultContext result() {
+			return getRuleContext(ResultContext.class,0);
 		}
 		public TypeNameContext typeName() {
 			return getRuleContext(TypeNameContext.class,0);
@@ -4232,23 +4302,36 @@ public class GolangParser extends Parser {
 		MethodSpecContext _localctx = new MethodSpecContext(_ctx, getState());
 		enterRule(_localctx, 132, RULE_methodSpec);
 		try {
-			setState(658);
+			setState(663);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,55,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(655);
-				match(IDENTIFIER);
+				if (!(noTerminatorAfterParams(2))) throw new FailedPredicateException(this, "noTerminatorAfterParams(2)");
 				setState(656);
-				signature();
+				match(IDENTIFIER);
+				setState(657);
+				parameters();
+				setState(658);
+				result();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(657);
+				setState(660);
 				typeName();
+				}
+				break;
+			case 3:
+				enterOuterAlt(_localctx, 3);
+				{
+				setState(661);
+				match(IDENTIFIER);
+				setState(662);
+				parameters();
 				}
 				break;
 			}
@@ -4288,9 +4371,9 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(660);
-			match(T__10);
-			setState(661);
+			setState(665);
+			match(T__9);
+			setState(666);
 			signature();
 			}
 		}
@@ -4332,14 +4415,14 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(663);
+			setState(668);
 			parameters();
-			setState(665);
+			setState(670);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,56,_ctx) ) {
 			case 1:
 				{
-				setState(664);
+				setState(669);
 				result();
 				}
 				break;
@@ -4382,20 +4465,20 @@ public class GolangParser extends Parser {
 		ResultContext _localctx = new ResultContext(_ctx, getState());
 		enterRule(_localctx, 138, RULE_result);
 		try {
-			setState(669);
+			setState(674);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,57,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(667);
+				setState(672);
 				parameters();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(668);
+				setState(673);
 				type();
 				}
 				break;
@@ -4437,21 +4520,21 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(671);
-			match(T__2);
 			setState(676);
+			match(T__2);
+			setState(681);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__14) | (1L << T__21) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__50) | (1L << T__51) | (1L << IDENTIFIER))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__13) | (1L << T__20) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__50) | (1L << T__51) | (1L << IDENTIFIER))) != 0)) {
 				{
-				setState(672);
+				setState(677);
 				parameterList();
-				setState(674);
+				setState(679);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__7) {
 					{
-					setState(673);
+					setState(678);
 					match(T__7);
 					}
 				}
@@ -4459,7 +4542,7 @@ public class GolangParser extends Parser {
 				}
 			}
 
-			setState(678);
+			setState(683);
 			match(T__3);
 			}
 		}
@@ -4502,23 +4585,23 @@ public class GolangParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(680);
-			parameterDecl();
 			setState(685);
+			parameterDecl();
+			setState(690);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,60,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					setState(681);
+					setState(686);
 					match(T__7);
-					setState(682);
+					setState(687);
 					parameterDecl();
 					}
 					} 
 				}
-				setState(687);
+				setState(692);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,60,_ctx);
 			}
@@ -4563,27 +4646,27 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(689);
+			setState(694);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,61,_ctx) ) {
 			case 1:
 				{
-				setState(688);
+				setState(693);
 				identifierList();
 				}
 				break;
 			}
-			setState(692);
+			setState(697);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__50) {
 				{
-				setState(691);
+				setState(696);
 				match(T__50);
 				}
 			}
 
-			setState(694);
+			setState(699);
 			type();
 			}
 		}
@@ -4629,38 +4712,38 @@ public class GolangParser extends Parser {
 		OperandContext _localctx = new OperandContext(_ctx, getState());
 		enterRule(_localctx, 146, RULE_operand);
 		try {
-			setState(703);
+			setState(708);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,63,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(696);
+				setState(701);
 				literal();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(697);
+				setState(702);
 				operandName();
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(698);
+				setState(703);
 				methodExpr();
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(699);
+				setState(704);
 				match(T__2);
-				setState(700);
+				setState(705);
 				expression(0);
-				setState(701);
+				setState(706);
 				match(T__3);
 				}
 				break;
@@ -4705,7 +4788,7 @@ public class GolangParser extends Parser {
 		LiteralContext _localctx = new LiteralContext(_ctx, getState());
 		enterRule(_localctx, 148, RULE_literal);
 		try {
-			setState(708);
+			setState(713);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case INT_LIT:
@@ -4715,7 +4798,7 @@ public class GolangParser extends Parser {
 			case STRING_LIT:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(705);
+				setState(710);
 				basicLit();
 				}
 				break;
@@ -4725,14 +4808,14 @@ public class GolangParser extends Parser {
 			case IDENTIFIER:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(706);
+				setState(711);
 				compositeLit();
 				}
 				break;
-			case T__10:
+			case T__9:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(707);
+				setState(712);
 				functionLit();
 				}
 				break;
@@ -4778,7 +4861,7 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(710);
+			setState(715);
 			_la = _input.LA(1);
 			if ( !(((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -4824,20 +4907,20 @@ public class GolangParser extends Parser {
 		OperandNameContext _localctx = new OperandNameContext(_ctx, getState());
 		enterRule(_localctx, 152, RULE_operandName);
 		try {
-			setState(714);
+			setState(719);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,65,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(712);
+				setState(717);
 				match(IDENTIFIER);
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(713);
+				setState(718);
 				qualifiedIdent();
 				}
 				break;
@@ -4879,11 +4962,11 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(716);
+			setState(721);
 			match(IDENTIFIER);
-			setState(717);
+			setState(722);
 			match(T__4);
-			setState(718);
+			setState(723);
 			match(IDENTIFIER);
 			}
 		}
@@ -4925,9 +5008,9 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(720);
+			setState(725);
 			literalType();
-			setState(721);
+			setState(726);
 			literalValue();
 			}
 		}
@@ -4979,54 +5062,54 @@ public class GolangParser extends Parser {
 		LiteralTypeContext _localctx = new LiteralTypeContext(_ctx, getState());
 		enterRule(_localctx, 158, RULE_literalType);
 		try {
-			setState(732);
+			setState(737);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,66,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(723);
+				setState(728);
 				structType();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(724);
+				setState(729);
 				arrayType();
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(725);
+				setState(730);
 				match(T__45);
-				setState(726);
+				setState(731);
 				match(T__50);
-				setState(727);
+				setState(732);
 				match(T__46);
-				setState(728);
+				setState(733);
 				elementType();
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(729);
+				setState(734);
 				sliceType();
 				}
 				break;
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(730);
+				setState(735);
 				mapType();
 				}
 				break;
 			case 6:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(731);
+				setState(736);
 				typeName();
 				}
 				break;
@@ -5068,21 +5151,21 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(734);
-			match(T__12);
 			setState(739);
+			match(T__11);
+			setState(744);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__12) | (1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__11) | (1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
 				{
-				setState(735);
+				setState(740);
 				elementList();
-				setState(737);
+				setState(742);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__7) {
 					{
-					setState(736);
+					setState(741);
 					match(T__7);
 					}
 				}
@@ -5090,8 +5173,8 @@ public class GolangParser extends Parser {
 				}
 			}
 
-			setState(741);
-			match(T__13);
+			setState(746);
+			match(T__12);
 			}
 		}
 		catch (RecognitionException re) {
@@ -5133,23 +5216,23 @@ public class GolangParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(743);
-			keyedElement();
 			setState(748);
+			keyedElement();
+			setState(753);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,69,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					setState(744);
+					setState(749);
 					match(T__7);
-					setState(745);
+					setState(750);
 					keyedElement();
 					}
 					} 
 				}
-				setState(750);
+				setState(755);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,69,_ctx);
 			}
@@ -5193,19 +5276,19 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(754);
+			setState(759);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,70,_ctx) ) {
 			case 1:
 				{
-				setState(751);
+				setState(756);
 				key();
-				setState(752);
+				setState(757);
 				match(T__29);
 				}
 				break;
 			}
-			setState(756);
+			setState(761);
 			element();
 			}
 		}
@@ -5246,27 +5329,27 @@ public class GolangParser extends Parser {
 		KeyContext _localctx = new KeyContext(_ctx, getState());
 		enterRule(_localctx, 166, RULE_key);
 		try {
-			setState(761);
+			setState(766);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,71,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(758);
+				setState(763);
 				match(IDENTIFIER);
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(759);
+				setState(764);
 				expression(0);
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(760);
+				setState(765);
 				literalValue();
 				}
 				break;
@@ -5308,17 +5391,17 @@ public class GolangParser extends Parser {
 		ElementContext _localctx = new ElementContext(_ctx, getState());
 		enterRule(_localctx, 168, RULE_element);
 		try {
-			setState(765);
+			setState(770);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__2:
-			case T__10:
-			case T__14:
+			case T__9:
+			case T__13:
+			case T__16:
 			case T__17:
-			case T__18:
+			case T__19:
 			case T__20:
-			case T__21:
-			case T__26:
+			case T__25:
 			case T__45:
 			case T__47:
 			case T__48:
@@ -5333,14 +5416,14 @@ public class GolangParser extends Parser {
 			case STRING_LIT:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(763);
+				setState(768);
 				expression(0);
 				}
 				break;
-			case T__12:
+			case T__11:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(764);
+				setState(769);
 				literalValue();
 				}
 				break;
@@ -5389,32 +5472,34 @@ public class GolangParser extends Parser {
 	public final StructTypeContext structType() throws RecognitionException {
 		StructTypeContext _localctx = new StructTypeContext(_ctx, getState());
 		enterRule(_localctx, 170, RULE_structType);
-		int _la;
 		try {
+			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(767);
+			setState(772);
 			match(T__51);
-			setState(768);
-			match(T__12);
-			setState(774);
+			setState(773);
+			match(T__11);
+			setState(779);
 			_errHandler.sync(this);
-			_la = _input.LA(1);
-			while (_la==T__21 || _la==IDENTIFIER) {
-				{
-				{
-				setState(769);
-				fieldDecl();
-				setState(770);
-				eos();
+			_alt = getInterpreter().adaptivePredict(_input,73,_ctx);
+			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+				if ( _alt==1 ) {
+					{
+					{
+					setState(774);
+					fieldDecl();
+					setState(775);
+					eos();
+					}
+					} 
 				}
-				}
-				setState(776);
+				setState(781);
 				_errHandler.sync(this);
-				_la = _input.LA(1);
+				_alt = getInterpreter().adaptivePredict(_input,73,_ctx);
 			}
-			setState(777);
-			match(T__13);
+			setState(782);
+			match(T__12);
 			}
 		}
 		catch (RecognitionException re) {
@@ -5459,30 +5544,32 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(783);
+			setState(789);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,74,_ctx) ) {
 			case 1:
 				{
-				setState(779);
+				setState(784);
+				if (!(noTerminatorBetween(2))) throw new FailedPredicateException(this, "noTerminatorBetween(2)");
+				setState(785);
 				identifierList();
-				setState(780);
+				setState(786);
 				type();
 				}
 				break;
 			case 2:
 				{
-				setState(782);
+				setState(788);
 				anonymousField();
 				}
 				break;
 			}
-			setState(786);
+			setState(792);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,75,_ctx) ) {
 			case 1:
 				{
-				setState(785);
+				setState(791);
 				match(STRING_LIT);
 				}
 				break;
@@ -5525,17 +5612,17 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(789);
+			setState(795);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__21) {
+			if (_la==T__20) {
 				{
-				setState(788);
-				match(T__21);
+				setState(794);
+				match(T__20);
 				}
 			}
 
-			setState(791);
+			setState(797);
 			typeName();
 			}
 		}
@@ -5574,9 +5661,9 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(793);
-			match(T__10);
-			setState(794);
+			setState(799);
+			match(T__9);
+			setState(800);
 			function();
 			}
 		}
@@ -5645,24 +5732,24 @@ public class GolangParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(799);
+			setState(805);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,77,_ctx) ) {
 			case 1:
 				{
-				setState(797);
+				setState(803);
 				operand();
 				}
 				break;
 			case 2:
 				{
-				setState(798);
+				setState(804);
 				conversion();
 				}
 				break;
 			}
 			_ctx.stop = _input.LT(-1);
-			setState(813);
+			setState(819);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,79,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
@@ -5670,16 +5757,16 @@ public class GolangParser extends Parser {
 					if ( _parseListeners!=null ) triggerExitRuleEvent();
 					_prevctx = _localctx;
 					{
-					setState(811);
+					setState(817);
 					_errHandler.sync(this);
 					switch ( getInterpreter().adaptivePredict(_input,78,_ctx) ) {
 					case 1:
 						{
 						_localctx = new PrimaryExprContext(_parentctx, _parentState);
 						pushNewRecursionContext(_localctx, _startState, RULE_primaryExpr);
-						setState(801);
+						setState(807);
 						if (!(precpred(_ctx, 5))) throw new FailedPredicateException(this, "precpred(_ctx, 5)");
-						setState(802);
+						setState(808);
 						selector();
 						}
 						break;
@@ -5687,9 +5774,9 @@ public class GolangParser extends Parser {
 						{
 						_localctx = new PrimaryExprContext(_parentctx, _parentState);
 						pushNewRecursionContext(_localctx, _startState, RULE_primaryExpr);
-						setState(803);
+						setState(809);
 						if (!(precpred(_ctx, 4))) throw new FailedPredicateException(this, "precpred(_ctx, 4)");
-						setState(804);
+						setState(810);
 						index();
 						}
 						break;
@@ -5697,9 +5784,9 @@ public class GolangParser extends Parser {
 						{
 						_localctx = new PrimaryExprContext(_parentctx, _parentState);
 						pushNewRecursionContext(_localctx, _startState, RULE_primaryExpr);
-						setState(805);
+						setState(811);
 						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
-						setState(806);
+						setState(812);
 						slice();
 						}
 						break;
@@ -5707,9 +5794,9 @@ public class GolangParser extends Parser {
 						{
 						_localctx = new PrimaryExprContext(_parentctx, _parentState);
 						pushNewRecursionContext(_localctx, _startState, RULE_primaryExpr);
-						setState(807);
+						setState(813);
 						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
-						setState(808);
+						setState(814);
 						typeAssertion();
 						}
 						break;
@@ -5717,16 +5804,16 @@ public class GolangParser extends Parser {
 						{
 						_localctx = new PrimaryExprContext(_parentctx, _parentState);
 						pushNewRecursionContext(_localctx, _startState, RULE_primaryExpr);
-						setState(809);
+						setState(815);
 						if (!(precpred(_ctx, 1))) throw new FailedPredicateException(this, "precpred(_ctx, 1)");
-						setState(810);
+						setState(816);
 						arguments();
 						}
 						break;
 					}
 					} 
 				}
-				setState(815);
+				setState(821);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,79,_ctx);
 			}
@@ -5765,9 +5852,9 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(816);
+			setState(822);
 			match(T__4);
-			setState(817);
+			setState(823);
 			match(IDENTIFIER);
 			}
 		}
@@ -5806,11 +5893,11 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(819);
+			setState(825);
 			match(T__45);
-			setState(820);
+			setState(826);
 			expression(0);
-			setState(821);
+			setState(827);
 			match(T__46);
 			}
 		}
@@ -5853,32 +5940,32 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(823);
+			setState(829);
 			match(T__45);
-			setState(839);
+			setState(845);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,83,_ctx) ) {
 			case 1:
 				{
 				{
-				setState(825);
+				setState(831);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
 					{
-					setState(824);
+					setState(830);
 					expression(0);
 					}
 				}
 
-				setState(827);
+				setState(833);
 				match(T__29);
-				setState(829);
+				setState(835);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
 					{
-					setState(828);
+					setState(834);
 					expression(0);
 					}
 				}
@@ -5889,29 +5976,29 @@ public class GolangParser extends Parser {
 			case 2:
 				{
 				{
-				setState(832);
+				setState(838);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
 					{
-					setState(831);
+					setState(837);
 					expression(0);
 					}
 				}
 
-				setState(834);
+				setState(840);
 				match(T__29);
-				setState(835);
+				setState(841);
 				expression(0);
-				setState(836);
+				setState(842);
 				match(T__29);
-				setState(837);
+				setState(843);
 				expression(0);
 				}
 				}
 				break;
 			}
-			setState(841);
+			setState(847);
 			match(T__46);
 			}
 		}
@@ -5950,13 +6037,13 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(843);
+			setState(849);
 			match(T__4);
-			setState(844);
+			setState(850);
 			match(T__2);
-			setState(845);
+			setState(851);
 			type();
-			setState(846);
+			setState(852);
 			match(T__3);
 			}
 		}
@@ -5999,34 +6086,34 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(848);
+			setState(854);
 			match(T__2);
-			setState(863);
+			setState(869);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__10) | (1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__9) | (1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__45) | (1L << T__47) | (1L << T__48) | (1L << T__49) | (1L << T__51) | (1L << T__60) | (1L << IDENTIFIER))) != 0) || ((((_la - 65)) & ~0x3f) == 0 && ((1L << (_la - 65)) & ((1L << (INT_LIT - 65)) | (1L << (FLOAT_LIT - 65)) | (1L << (IMAGINARY_LIT - 65)) | (1L << (RUNE_LIT - 65)) | (1L << (STRING_LIT - 65)))) != 0)) {
 				{
-				setState(855);
+				setState(861);
 				_errHandler.sync(this);
 				switch ( getInterpreter().adaptivePredict(_input,85,_ctx) ) {
 				case 1:
 					{
-					setState(849);
+					setState(855);
 					expressionList();
 					}
 					break;
 				case 2:
 					{
-					setState(850);
+					setState(856);
 					type();
-					setState(853);
+					setState(859);
 					_errHandler.sync(this);
 					switch ( getInterpreter().adaptivePredict(_input,84,_ctx) ) {
 					case 1:
 						{
-						setState(851);
+						setState(857);
 						match(T__7);
-						setState(852);
+						setState(858);
 						expressionList();
 						}
 						break;
@@ -6034,22 +6121,22 @@ public class GolangParser extends Parser {
 					}
 					break;
 				}
-				setState(858);
+				setState(864);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__50) {
 					{
-					setState(857);
+					setState(863);
 					match(T__50);
 					}
 				}
 
-				setState(861);
+				setState(867);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__7) {
 					{
-					setState(860);
+					setState(866);
 					match(T__7);
 					}
 				}
@@ -6057,7 +6144,7 @@ public class GolangParser extends Parser {
 				}
 			}
 
-			setState(865);
+			setState(871);
 			match(T__3);
 			}
 		}
@@ -6097,11 +6184,11 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(867);
+			setState(873);
 			receiverType();
-			setState(868);
+			setState(874);
 			match(T__4);
-			setState(869);
+			setState(875);
 			match(IDENTIFIER);
 			}
 		}
@@ -6141,37 +6228,37 @@ public class GolangParser extends Parser {
 		ReceiverTypeContext _localctx = new ReceiverTypeContext(_ctx, getState());
 		enterRule(_localctx, 192, RULE_receiverType);
 		try {
-			setState(881);
+			setState(887);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,89,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(871);
+				setState(877);
 				typeName();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(872);
+				setState(878);
 				match(T__2);
-				setState(873);
-				match(T__21);
-				setState(874);
+				setState(879);
+				match(T__20);
+				setState(880);
 				typeName();
-				setState(875);
+				setState(881);
 				match(T__3);
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(877);
+				setState(883);
 				match(T__2);
-				setState(878);
+				setState(884);
 				receiverType();
-				setState(879);
+				setState(885);
 				match(T__3);
 				}
 				break;
@@ -6229,11 +6316,11 @@ public class GolangParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			{
-			setState(884);
+			setState(890);
 			unaryExpr();
 			}
 			_ctx.stop = _input.LT(-1);
-			setState(891);
+			setState(897);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,90,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
@@ -6244,11 +6331,11 @@ public class GolangParser extends Parser {
 					{
 					_localctx = new ExpressionContext(_parentctx, _parentState);
 					pushNewRecursionContext(_localctx, _startState, RULE_expression);
-					setState(886);
+					setState(892);
 					if (!(precpred(_ctx, 1))) throw new FailedPredicateException(this, "precpred(_ctx, 1)");
-					setState(887);
+					setState(893);
 					_la = _input.LA(1);
-					if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__17) | (1L << T__18) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26) | (1L << T__27) | (1L << T__52) | (1L << T__53) | (1L << T__54) | (1L << T__55) | (1L << T__56) | (1L << T__57) | (1L << T__58) | (1L << T__59))) != 0)) ) {
+					if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__16) | (1L << T__17) | (1L << T__18) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26) | (1L << T__52) | (1L << T__53) | (1L << T__54) | (1L << T__55) | (1L << T__56) | (1L << T__57) | (1L << T__58) | (1L << T__59))) != 0)) ) {
 					_errHandler.recoverInline(this);
 					}
 					else {
@@ -6256,12 +6343,12 @@ public class GolangParser extends Parser {
 						_errHandler.reportMatch(this);
 						consume();
 					}
-					setState(888);
+					setState(894);
 					expression(2);
 					}
 					} 
 				}
-				setState(893);
+				setState(899);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,90,_ctx);
 			}
@@ -6304,22 +6391,22 @@ public class GolangParser extends Parser {
 		enterRule(_localctx, 196, RULE_unaryExpr);
 		int _la;
 		try {
-			setState(897);
+			setState(903);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,91,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(894);
+				setState(900);
 				primaryExpr(0);
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(895);
+				setState(901);
 				_la = _input.LA(1);
-				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__14) | (1L << T__17) | (1L << T__18) | (1L << T__20) | (1L << T__21) | (1L << T__26) | (1L << T__60))) != 0)) ) {
+				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__13) | (1L << T__16) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__25) | (1L << T__60))) != 0)) ) {
 				_errHandler.recoverInline(this);
 				}
 				else {
@@ -6327,7 +6414,7 @@ public class GolangParser extends Parser {
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				setState(896);
+				setState(902);
 				unaryExpr();
 				}
 				break;
@@ -6372,23 +6459,23 @@ public class GolangParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(899);
+			setState(905);
 			type();
-			setState(900);
+			setState(906);
 			match(T__2);
-			setState(901);
+			setState(907);
 			expression(0);
-			setState(903);
+			setState(909);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__7) {
 				{
-				setState(902);
+				setState(908);
 				match(T__7);
 				}
 			}
 
-			setState(905);
+			setState(911);
 			match(T__3);
 			}
 		}
@@ -6423,34 +6510,34 @@ public class GolangParser extends Parser {
 		EosContext _localctx = new EosContext(_ctx, getState());
 		enterRule(_localctx, 200, RULE_eos);
 		try {
-			setState(911);
+			setState(917);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,93,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(907);
-				match(T__9);
+				setState(913);
+				match(T__28);
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(908);
+				setState(914);
 				match(EOF);
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(909);
+				setState(915);
 				if (!(lineTerminatorAhead())) throw new FailedPredicateException(this, "lineTerminatorAhead()");
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(910);
+				setState(916);
 				if (!(_input.LT(1).getText().equals("}") )) throw new FailedPredicateException(this, "_input.LT(1).getText().equals(\"}\") ");
 				}
 				break;
@@ -6469,6 +6556,10 @@ public class GolangParser extends Parser {
 
 	public boolean sempred(RuleContext _localctx, int ruleIndex, int predIndex) {
 		switch (ruleIndex) {
+		case 66:
+			return methodSpec_sempred((MethodSpecContext)_localctx, predIndex);
+		case 86:
+			return fieldDecl_sempred((FieldDeclContext)_localctx, predIndex);
 		case 89:
 			return primaryExpr_sempred((PrimaryExprContext)_localctx, predIndex);
 		case 97:
@@ -6478,40 +6569,54 @@ public class GolangParser extends Parser {
 		}
 		return true;
 	}
-	private boolean primaryExpr_sempred(PrimaryExprContext _localctx, int predIndex) {
+	private boolean methodSpec_sempred(MethodSpecContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 0:
-			return precpred(_ctx, 5);
+			return noTerminatorAfterParams(2);
+		}
+		return true;
+	}
+	private boolean fieldDecl_sempred(FieldDeclContext _localctx, int predIndex) {
+		switch (predIndex) {
 		case 1:
-			return precpred(_ctx, 4);
+			return noTerminatorBetween(2);
+		}
+		return true;
+	}
+	private boolean primaryExpr_sempred(PrimaryExprContext _localctx, int predIndex) {
+		switch (predIndex) {
 		case 2:
-			return precpred(_ctx, 3);
+			return precpred(_ctx, 5);
 		case 3:
-			return precpred(_ctx, 2);
+			return precpred(_ctx, 4);
 		case 4:
+			return precpred(_ctx, 3);
+		case 5:
+			return precpred(_ctx, 2);
+		case 6:
 			return precpred(_ctx, 1);
 		}
 		return true;
 	}
 	private boolean expression_sempred(ExpressionContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 5:
+		case 7:
 			return precpred(_ctx, 1);
 		}
 		return true;
 	}
 	private boolean eos_sempred(EosContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 6:
+		case 8:
 			return lineTerminatorAhead();
-		case 7:
+		case 9:
 			return _input.LT(1).getText().equals("}") ;
 		}
 		return true;
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3M\u0394\4\2\t\2\4"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3M\u039a\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -6555,71 +6660,71 @@ public class GolangParser extends Parser {
 		"9\39\59\u0257\n9\3:\3:\5:\u025b\n:\3;\3;\3;\3;\3;\3;\3;\3;\5;\u0265\n"+
 		";\3<\3<\3<\3<\3<\3=\3=\3>\3>\3?\3?\3?\3@\3@\3@\3@\3@\7@\u0278\n@\f@\16"+
 		"@\u027b\13@\3@\3@\3A\3A\3A\3A\3B\3B\3B\3B\3B\3B\3C\3C\3C\3C\3C\5C\u028e"+
-		"\nC\3C\3C\3D\3D\3D\5D\u0295\nD\3E\3E\3E\3F\3F\5F\u029c\nF\3G\3G\5G\u02a0"+
-		"\nG\3H\3H\3H\5H\u02a5\nH\5H\u02a7\nH\3H\3H\3I\3I\3I\7I\u02ae\nI\fI\16"+
-		"I\u02b1\13I\3J\5J\u02b4\nJ\3J\5J\u02b7\nJ\3J\3J\3K\3K\3K\3K\3K\3K\3K\5"+
-		"K\u02c2\nK\3L\3L\3L\5L\u02c7\nL\3M\3M\3N\3N\5N\u02cd\nN\3O\3O\3O\3O\3"+
-		"P\3P\3P\3Q\3Q\3Q\3Q\3Q\3Q\3Q\3Q\3Q\5Q\u02df\nQ\3R\3R\3R\5R\u02e4\nR\5"+
-		"R\u02e6\nR\3R\3R\3S\3S\3S\7S\u02ed\nS\fS\16S\u02f0\13S\3T\3T\3T\5T\u02f5"+
-		"\nT\3T\3T\3U\3U\3U\5U\u02fc\nU\3V\3V\5V\u0300\nV\3W\3W\3W\3W\3W\7W\u0307"+
-		"\nW\fW\16W\u030a\13W\3W\3W\3X\3X\3X\3X\5X\u0312\nX\3X\5X\u0315\nX\3Y\5"+
-		"Y\u0318\nY\3Y\3Y\3Z\3Z\3Z\3[\3[\3[\5[\u0322\n[\3[\3[\3[\3[\3[\3[\3[\3"+
-		"[\3[\3[\7[\u032e\n[\f[\16[\u0331\13[\3\\\3\\\3\\\3]\3]\3]\3]\3^\3^\5^"+
-		"\u033c\n^\3^\3^\5^\u0340\n^\3^\5^\u0343\n^\3^\3^\3^\3^\3^\5^\u034a\n^"+
-		"\3^\3^\3_\3_\3_\3_\3_\3`\3`\3`\3`\3`\5`\u0358\n`\5`\u035a\n`\3`\5`\u035d"+
-		"\n`\3`\5`\u0360\n`\5`\u0362\n`\3`\3`\3a\3a\3a\3a\3b\3b\3b\3b\3b\3b\3b"+
-		"\3b\3b\3b\5b\u0374\nb\3c\3c\3c\3c\3c\3c\7c\u037c\nc\fc\16c\u037f\13c\3"+
-		"d\3d\3d\5d\u0384\nd\3e\3e\3e\3e\5e\u038a\ne\3e\3e\3f\3f\3f\3f\5f\u0392"+
-		"\nf\3f\2\4\u00b4\u00c4g\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*"+
-		",.\60\62\64\668:<>@BDFHJLNPRTVXZ\\^`bdfhjlnprtvxz|~\u0080\u0082\u0084"+
-		"\u0086\u0088\u008a\u008c\u008e\u0090\u0092\u0094\u0096\u0098\u009a\u009c"+
-		"\u009e\u00a0\u00a2\u00a4\u00a6\u00a8\u00aa\u00ac\u00ae\u00b0\u00b2\u00b4"+
-		"\u00b6\u00b8\u00ba\u00bc\u00be\u00c0\u00c2\u00c4\u00c6\u00c8\u00ca\2\b"+
-		"\4\2\7\7@@\3\2\22\23\3\2\24\36\4\2CFII\4\2\24\36\67>\7\2\21\21\24\25\27"+
-		"\30\35\35??\2\u03b9\2\u00cc\3\2\2\2\4\u00de\3\2\2\2\6\u00e1\3\2\2\2\b"+
-		"\u00f0\3\2\2\2\n\u00f4\3\2\2\2\f\u00f9\3\2\2\2\16\u00fe\3\2\2\2\20\u0100"+
-		"\3\2\2\2\22\u010e\3\2\2\2\24\u0116\3\2\2\2\26\u011e\3\2\2\2\30\u0126\3"+
-		"\2\2\2\32\u0134\3\2\2\2\34\u0137\3\2\2\2\36\u013d\3\2\2\2 \u0140\3\2\2"+
-		"\2\"\u0147\3\2\2\2$\u0149\3\2\2\2&\u0157\3\2\2\2(\u0161\3\2\2\2*\u016a"+
-		"\3\2\2\2,\u017c\3\2\2\2.\u0184\3\2\2\2\60\u0186\3\2\2\2\62\u0188\3\2\2"+
-		"\2\64\u018c\3\2\2\2\66\u018f\3\2\2\28\u0194\3\2\2\2:\u0198\3\2\2\2<\u019c"+
-		"\3\2\2\2>\u019e\3\2\2\2@\u01a2\3\2\2\2B\u01a6\3\2\2\2D\u01aa\3\2\2\2F"+
-		"\u01ae\3\2\2\2H\u01b1\3\2\2\2J\u01b3\3\2\2\2L\u01b6\3\2\2\2N\u01c7\3\2"+
-		"\2\2P\u01c9\3\2\2\2R\u01db\3\2\2\2T\u01e2\3\2\2\2V\u01e4\3\2\2\2X\u01f6"+
-		"\3\2\2\2Z\u01fe\3\2\2\2\\\u0205\3\2\2\2^\u0207\3\2\2\2`\u020f\3\2\2\2"+
-		"b\u0219\3\2\2\2d\u0223\3\2\2\2f\u022b\3\2\2\2h\u022f\3\2\2\2j\u0238\3"+
-		"\2\2\2l\u0248\3\2\2\2n\u024d\3\2\2\2p\u0256\3\2\2\2r\u025a\3\2\2\2t\u0264"+
-		"\3\2\2\2v\u0266\3\2\2\2x\u026b\3\2\2\2z\u026d\3\2\2\2|\u026f\3\2\2\2~"+
-		"\u0272\3\2\2\2\u0080\u027e\3\2\2\2\u0082\u0282\3\2\2\2\u0084\u028d\3\2"+
-		"\2\2\u0086\u0294\3\2\2\2\u0088\u0296\3\2\2\2\u008a\u0299\3\2\2\2\u008c"+
-		"\u029f\3\2\2\2\u008e\u02a1\3\2\2\2\u0090\u02aa\3\2\2\2\u0092\u02b3\3\2"+
-		"\2\2\u0094\u02c1\3\2\2\2\u0096\u02c6\3\2\2\2\u0098\u02c8\3\2\2\2\u009a"+
-		"\u02cc\3\2\2\2\u009c\u02ce\3\2\2\2\u009e\u02d2\3\2\2\2\u00a0\u02de\3\2"+
-		"\2\2\u00a2\u02e0\3\2\2\2\u00a4\u02e9\3\2\2\2\u00a6\u02f4\3\2\2\2\u00a8"+
-		"\u02fb\3\2\2\2\u00aa\u02ff\3\2\2\2\u00ac\u0301\3\2\2\2\u00ae\u0311\3\2"+
-		"\2\2\u00b0\u0317\3\2\2\2\u00b2\u031b\3\2\2\2\u00b4\u0321\3\2\2\2\u00b6"+
-		"\u0332\3\2\2\2\u00b8\u0335\3\2\2\2\u00ba\u0339\3\2\2\2\u00bc\u034d\3\2"+
-		"\2\2\u00be\u0352\3\2\2\2\u00c0\u0365\3\2\2\2\u00c2\u0373\3\2\2\2\u00c4"+
-		"\u0375\3\2\2\2\u00c6\u0383\3\2\2\2\u00c8\u0385\3\2\2\2\u00ca\u0391\3\2"+
-		"\2\2\u00cc\u00cd\5\4\3\2\u00cd\u00d3\5\u00caf\2\u00ce\u00cf\5\6\4\2\u00cf"+
-		"\u00d0\5\u00caf\2\u00d0\u00d2\3\2\2\2\u00d1\u00ce\3\2\2\2\u00d2\u00d5"+
-		"\3\2\2\2\u00d3\u00d1\3\2\2\2\u00d3\u00d4\3\2\2\2\u00d4\u00db\3\2\2\2\u00d5"+
-		"\u00d3\3\2\2\2\u00d6\u00d7\5\f\7\2\u00d7\u00d8\5\u00caf\2\u00d8\u00da"+
-		"\3\2\2\2\u00d9\u00d6\3\2\2\2\u00da\u00dd\3\2\2\2\u00db\u00d9\3\2\2\2\u00db"+
-		"\u00dc\3\2\2\2\u00dc\3\3\2\2\2\u00dd\u00db\3\2\2\2\u00de\u00df\7\3\2\2"+
-		"\u00df\u00e0\7@\2\2\u00e0\5\3\2\2\2\u00e1\u00ed\7\4\2\2\u00e2\u00ee\5"+
-		"\b\5\2\u00e3\u00e9\7\5\2\2\u00e4\u00e5\5\b\5\2\u00e5\u00e6\5\u00caf\2"+
-		"\u00e6\u00e8\3\2\2\2\u00e7\u00e4\3\2\2\2\u00e8\u00eb\3\2\2\2\u00e9\u00e7"+
-		"\3\2\2\2\u00e9\u00ea\3\2\2\2\u00ea\u00ec\3\2\2\2\u00eb\u00e9\3\2\2\2\u00ec"+
-		"\u00ee\7\6\2\2\u00ed\u00e2\3\2\2\2\u00ed\u00e3\3\2\2\2\u00ee\7\3\2\2\2"+
-		"\u00ef\u00f1\t\2\2\2\u00f0\u00ef\3\2\2\2\u00f0\u00f1\3\2\2\2\u00f1\u00f2"+
-		"\3\2\2\2\u00f2\u00f3\5\n\6\2\u00f3\t\3\2\2\2\u00f4\u00f5\7I\2\2\u00f5"+
-		"\13\3\2\2\2\u00f6\u00fa\5\16\b\2\u00f7\u00fa\5\34\17\2\u00f8\u00fa\5 "+
-		"\21\2\u00f9\u00f6\3\2\2\2\u00f9\u00f7\3\2\2\2\u00f9\u00f8\3\2\2\2\u00fa"+
-		"\r\3\2\2\2\u00fb\u00ff\5\20\t\2\u00fc\u00ff\5\30\r\2\u00fd\u00ff\5$\23"+
-		"\2\u00fe\u00fb\3\2\2\2\u00fe\u00fc\3\2\2\2\u00fe\u00fd\3\2\2\2\u00ff\17"+
-		"\3\2\2\2\u0100\u010c\7\b\2\2\u0101\u010d\5\22\n\2\u0102\u0108\7\5\2\2"+
-		"\u0103\u0104\5\22\n\2\u0104\u0105\5\u00caf\2\u0105\u0107\3\2\2\2\u0106"+
+		"\nC\3C\3C\3D\3D\3D\3D\3D\3D\3D\3D\5D\u029a\nD\3E\3E\3E\3F\3F\5F\u02a1"+
+		"\nF\3G\3G\5G\u02a5\nG\3H\3H\3H\5H\u02aa\nH\5H\u02ac\nH\3H\3H\3I\3I\3I"+
+		"\7I\u02b3\nI\fI\16I\u02b6\13I\3J\5J\u02b9\nJ\3J\5J\u02bc\nJ\3J\3J\3K\3"+
+		"K\3K\3K\3K\3K\3K\5K\u02c7\nK\3L\3L\3L\5L\u02cc\nL\3M\3M\3N\3N\5N\u02d2"+
+		"\nN\3O\3O\3O\3O\3P\3P\3P\3Q\3Q\3Q\3Q\3Q\3Q\3Q\3Q\3Q\5Q\u02e4\nQ\3R\3R"+
+		"\3R\5R\u02e9\nR\5R\u02eb\nR\3R\3R\3S\3S\3S\7S\u02f2\nS\fS\16S\u02f5\13"+
+		"S\3T\3T\3T\5T\u02fa\nT\3T\3T\3U\3U\3U\5U\u0301\nU\3V\3V\5V\u0305\nV\3"+
+		"W\3W\3W\3W\3W\7W\u030c\nW\fW\16W\u030f\13W\3W\3W\3X\3X\3X\3X\3X\5X\u0318"+
+		"\nX\3X\5X\u031b\nX\3Y\5Y\u031e\nY\3Y\3Y\3Z\3Z\3Z\3[\3[\3[\5[\u0328\n["+
+		"\3[\3[\3[\3[\3[\3[\3[\3[\3[\3[\7[\u0334\n[\f[\16[\u0337\13[\3\\\3\\\3"+
+		"\\\3]\3]\3]\3]\3^\3^\5^\u0342\n^\3^\3^\5^\u0346\n^\3^\5^\u0349\n^\3^\3"+
+		"^\3^\3^\3^\5^\u0350\n^\3^\3^\3_\3_\3_\3_\3_\3`\3`\3`\3`\3`\5`\u035e\n"+
+		"`\5`\u0360\n`\3`\5`\u0363\n`\3`\5`\u0366\n`\5`\u0368\n`\3`\3`\3a\3a\3"+
+		"a\3a\3b\3b\3b\3b\3b\3b\3b\3b\3b\3b\5b\u037a\nb\3c\3c\3c\3c\3c\3c\7c\u0382"+
+		"\nc\fc\16c\u0385\13c\3d\3d\3d\5d\u038a\nd\3e\3e\3e\3e\5e\u0390\ne\3e\3"+
+		"e\3f\3f\3f\3f\5f\u0398\nf\3f\2\4\u00b4\u00c4g\2\4\6\b\n\f\16\20\22\24"+
+		"\26\30\32\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTVXZ\\^`bdfhjlnprtv"+
+		"xz|~\u0080\u0082\u0084\u0086\u0088\u008a\u008c\u008e\u0090\u0092\u0094"+
+		"\u0096\u0098\u009a\u009c\u009e\u00a0\u00a2\u00a4\u00a6\u00a8\u00aa\u00ac"+
+		"\u00ae\u00b0\u00b2\u00b4\u00b6\u00b8\u00ba\u00bc\u00be\u00c0\u00c2\u00c4"+
+		"\u00c6\u00c8\u00ca\2\b\4\2\7\7@@\3\2\21\22\3\2\23\35\4\2CFII\4\2\23\35"+
+		"\67>\7\2\20\20\23\24\26\27\34\34??\2\u03c0\2\u00cc\3\2\2\2\4\u00de\3\2"+
+		"\2\2\6\u00e1\3\2\2\2\b\u00f0\3\2\2\2\n\u00f4\3\2\2\2\f\u00f9\3\2\2\2\16"+
+		"\u00fe\3\2\2\2\20\u0100\3\2\2\2\22\u010e\3\2\2\2\24\u0116\3\2\2\2\26\u011e"+
+		"\3\2\2\2\30\u0126\3\2\2\2\32\u0134\3\2\2\2\34\u0137\3\2\2\2\36\u013d\3"+
+		"\2\2\2 \u0140\3\2\2\2\"\u0147\3\2\2\2$\u0149\3\2\2\2&\u0157\3\2\2\2(\u0161"+
+		"\3\2\2\2*\u016a\3\2\2\2,\u017c\3\2\2\2.\u0184\3\2\2\2\60\u0186\3\2\2\2"+
+		"\62\u0188\3\2\2\2\64\u018c\3\2\2\2\66\u018f\3\2\2\28\u0194\3\2\2\2:\u0198"+
+		"\3\2\2\2<\u019c\3\2\2\2>\u019e\3\2\2\2@\u01a2\3\2\2\2B\u01a6\3\2\2\2D"+
+		"\u01aa\3\2\2\2F\u01ae\3\2\2\2H\u01b1\3\2\2\2J\u01b3\3\2\2\2L\u01b6\3\2"+
+		"\2\2N\u01c7\3\2\2\2P\u01c9\3\2\2\2R\u01db\3\2\2\2T\u01e2\3\2\2\2V\u01e4"+
+		"\3\2\2\2X\u01f6\3\2\2\2Z\u01fe\3\2\2\2\\\u0205\3\2\2\2^\u0207\3\2\2\2"+
+		"`\u020f\3\2\2\2b\u0219\3\2\2\2d\u0223\3\2\2\2f\u022b\3\2\2\2h\u022f\3"+
+		"\2\2\2j\u0238\3\2\2\2l\u0248\3\2\2\2n\u024d\3\2\2\2p\u0256\3\2\2\2r\u025a"+
+		"\3\2\2\2t\u0264\3\2\2\2v\u0266\3\2\2\2x\u026b\3\2\2\2z\u026d\3\2\2\2|"+
+		"\u026f\3\2\2\2~\u0272\3\2\2\2\u0080\u027e\3\2\2\2\u0082\u0282\3\2\2\2"+
+		"\u0084\u028d\3\2\2\2\u0086\u0299\3\2\2\2\u0088\u029b\3\2\2\2\u008a\u029e"+
+		"\3\2\2\2\u008c\u02a4\3\2\2\2\u008e\u02a6\3\2\2\2\u0090\u02af\3\2\2\2\u0092"+
+		"\u02b8\3\2\2\2\u0094\u02c6\3\2\2\2\u0096\u02cb\3\2\2\2\u0098\u02cd\3\2"+
+		"\2\2\u009a\u02d1\3\2\2\2\u009c\u02d3\3\2\2\2\u009e\u02d7\3\2\2\2\u00a0"+
+		"\u02e3\3\2\2\2\u00a2\u02e5\3\2\2\2\u00a4\u02ee\3\2\2\2\u00a6\u02f9\3\2"+
+		"\2\2\u00a8\u0300\3\2\2\2\u00aa\u0304\3\2\2\2\u00ac\u0306\3\2\2\2\u00ae"+
+		"\u0317\3\2\2\2\u00b0\u031d\3\2\2\2\u00b2\u0321\3\2\2\2\u00b4\u0327\3\2"+
+		"\2\2\u00b6\u0338\3\2\2\2\u00b8\u033b\3\2\2\2\u00ba\u033f\3\2\2\2\u00bc"+
+		"\u0353\3\2\2\2\u00be\u0358\3\2\2\2\u00c0\u036b\3\2\2\2\u00c2\u0379\3\2"+
+		"\2\2\u00c4\u037b\3\2\2\2\u00c6\u0389\3\2\2\2\u00c8\u038b\3\2\2\2\u00ca"+
+		"\u0397\3\2\2\2\u00cc\u00cd\5\4\3\2\u00cd\u00d3\5\u00caf\2\u00ce\u00cf"+
+		"\5\6\4\2\u00cf\u00d0\5\u00caf\2\u00d0\u00d2\3\2\2\2\u00d1\u00ce\3\2\2"+
+		"\2\u00d2\u00d5\3\2\2\2\u00d3\u00d1\3\2\2\2\u00d3\u00d4\3\2\2\2\u00d4\u00db"+
+		"\3\2\2\2\u00d5\u00d3\3\2\2\2\u00d6\u00d7\5\f\7\2\u00d7\u00d8\5\u00caf"+
+		"\2\u00d8\u00da\3\2\2\2\u00d9\u00d6\3\2\2\2\u00da\u00dd\3\2\2\2\u00db\u00d9"+
+		"\3\2\2\2\u00db\u00dc\3\2\2\2\u00dc\3\3\2\2\2\u00dd\u00db\3\2\2\2\u00de"+
+		"\u00df\7\3\2\2\u00df\u00e0\7@\2\2\u00e0\5\3\2\2\2\u00e1\u00ed\7\4\2\2"+
+		"\u00e2\u00ee\5\b\5\2\u00e3\u00e9\7\5\2\2\u00e4\u00e5\5\b\5\2\u00e5\u00e6"+
+		"\5\u00caf\2\u00e6\u00e8\3\2\2\2\u00e7\u00e4\3\2\2\2\u00e8\u00eb\3\2\2"+
+		"\2\u00e9\u00e7\3\2\2\2\u00e9\u00ea\3\2\2\2\u00ea\u00ec\3\2\2\2\u00eb\u00e9"+
+		"\3\2\2\2\u00ec\u00ee\7\6\2\2\u00ed\u00e2\3\2\2\2\u00ed\u00e3\3\2\2\2\u00ee"+
+		"\7\3\2\2\2\u00ef\u00f1\t\2\2\2\u00f0\u00ef\3\2\2\2\u00f0\u00f1\3\2\2\2"+
+		"\u00f1\u00f2\3\2\2\2\u00f2\u00f3\5\n\6\2\u00f3\t\3\2\2\2\u00f4\u00f5\7"+
+		"I\2\2\u00f5\13\3\2\2\2\u00f6\u00fa\5\16\b\2\u00f7\u00fa\5\34\17\2\u00f8"+
+		"\u00fa\5 \21\2\u00f9\u00f6\3\2\2\2\u00f9\u00f7\3\2\2\2\u00f9\u00f8\3\2"+
+		"\2\2\u00fa\r\3\2\2\2\u00fb\u00ff\5\20\t\2\u00fc\u00ff\5\30\r\2\u00fd\u00ff"+
+		"\5$\23\2\u00fe\u00fb\3\2\2\2\u00fe\u00fc\3\2\2\2\u00fe\u00fd\3\2\2\2\u00ff"+
+		"\17\3\2\2\2\u0100\u010c\7\b\2\2\u0101\u010d\5\22\n\2\u0102\u0108\7\5\2"+
+		"\2\u0103\u0104\5\22\n\2\u0104\u0105\5\u00caf\2\u0105\u0107\3\2\2\2\u0106"+
 		"\u0103\3\2\2\2\u0107\u010a\3\2\2\2\u0108\u0106\3\2\2\2\u0108\u0109\3\2"+
 		"\2\2\u0109\u010b\3\2\2\2\u010a\u0108\3\2\2\2\u010b\u010d\7\6\2\2\u010c"+
 		"\u0101\3\2\2\2\u010c\u0102\3\2\2\2\u010d\21\3\2\2\2\u010e\u0114\5\24\13"+
@@ -6631,26 +6736,26 @@ public class GolangParser extends Parser {
 		"\2\u011e\u0123\5\u00c4c\2\u011f\u0120\7\n\2\2\u0120\u0122\5\u00c4c\2\u0121"+
 		"\u011f\3\2\2\2\u0122\u0125\3\2\2\2\u0123\u0121\3\2\2\2\u0123\u0124\3\2"+
 		"\2\2\u0124\27\3\2\2\2\u0125\u0123\3\2\2\2\u0126\u0132\7\13\2\2\u0127\u0133"+
-		"\5\32\16\2\u0128\u012e\7\5\2\2\u0129\u012a\5\32\16\2\u012a\u012b\7\f\2"+
-		"\2\u012b\u012d\3\2\2\2\u012c\u0129\3\2\2\2\u012d\u0130\3\2\2\2\u012e\u012c"+
-		"\3\2\2\2\u012e\u012f\3\2\2\2\u012f\u0131\3\2\2\2\u0130\u012e\3\2\2\2\u0131"+
-		"\u0133\7\6\2\2\u0132\u0127\3\2\2\2\u0132\u0128\3\2\2\2\u0133\31\3\2\2"+
-		"\2\u0134\u0135\7@\2\2\u0135\u0136\5p9\2\u0136\33\3\2\2\2\u0137\u0138\7"+
-		"\r\2\2\u0138\u013b\7@\2\2\u0139\u013c\5\36\20\2\u013a\u013c\5\u008aF\2"+
-		"\u013b\u0139\3\2\2\2\u013b\u013a\3\2\2\2\u013c\35\3\2\2\2\u013d\u013e"+
-		"\5\u008aF\2\u013e\u013f\5(\25\2\u013f\37\3\2\2\2\u0140\u0141\7\r\2\2\u0141"+
-		"\u0142\5\"\22\2\u0142\u0145\7@\2\2\u0143\u0146\5\36\20\2\u0144\u0146\5"+
-		"\u008aF\2\u0145\u0143\3\2\2\2\u0145\u0144\3\2\2\2\u0146!\3\2\2\2\u0147"+
-		"\u0148\5\u008eH\2\u0148#\3\2\2\2\u0149\u0155\7\16\2\2\u014a\u0156\5&\24"+
-		"\2\u014b\u0151\7\5\2\2\u014c\u014d\5&\24\2\u014d\u014e\5\u00caf\2\u014e"+
-		"\u0150\3\2\2\2\u014f\u014c\3\2\2\2\u0150\u0153\3\2\2\2\u0151\u014f\3\2"+
-		"\2\2\u0151\u0152\3\2\2\2\u0152\u0154\3\2\2\2\u0153\u0151\3\2\2\2\u0154"+
+		"\5\32\16\2\u0128\u012e\7\5\2\2\u0129\u012a\5\32\16\2\u012a\u012b\5\u00ca"+
+		"f\2\u012b\u012d\3\2\2\2\u012c\u0129\3\2\2\2\u012d\u0130\3\2\2\2\u012e"+
+		"\u012c\3\2\2\2\u012e\u012f\3\2\2\2\u012f\u0131\3\2\2\2\u0130\u012e\3\2"+
+		"\2\2\u0131\u0133\7\6\2\2\u0132\u0127\3\2\2\2\u0132\u0128\3\2\2\2\u0133"+
+		"\31\3\2\2\2\u0134\u0135\7@\2\2\u0135\u0136\5p9\2\u0136\33\3\2\2\2\u0137"+
+		"\u0138\7\f\2\2\u0138\u013b\7@\2\2\u0139\u013c\5\36\20\2\u013a\u013c\5"+
+		"\u008aF\2\u013b\u0139\3\2\2\2\u013b\u013a\3\2\2\2\u013c\35\3\2\2\2\u013d"+
+		"\u013e\5\u008aF\2\u013e\u013f\5(\25\2\u013f\37\3\2\2\2\u0140\u0141\7\f"+
+		"\2\2\u0141\u0142\5\"\22\2\u0142\u0145\7@\2\2\u0143\u0146\5\36\20\2\u0144"+
+		"\u0146\5\u008aF\2\u0145\u0143\3\2\2\2\u0145\u0144\3\2\2\2\u0146!\3\2\2"+
+		"\2\u0147\u0148\5\u008eH\2\u0148#\3\2\2\2\u0149\u0155\7\r\2\2\u014a\u0156"+
+		"\5&\24\2\u014b\u0151\7\5\2\2\u014c\u014d\5&\24\2\u014d\u014e\5\u00caf"+
+		"\2\u014e\u0150\3\2\2\2\u014f\u014c\3\2\2\2\u0150\u0153\3\2\2\2\u0151\u014f"+
+		"\3\2\2\2\u0151\u0152\3\2\2\2\u0152\u0154\3\2\2\2\u0153\u0151\3\2\2\2\u0154"+
 		"\u0156\7\6\2\2\u0155\u014a\3\2\2\2\u0155\u014b\3\2\2\2\u0156%\3\2\2\2"+
 		"\u0157\u015f\5\24\13\2\u0158\u015b\5p9\2\u0159\u015a\7\t\2\2\u015a\u015c"+
 		"\5\26\f\2\u015b\u0159\3\2\2\2\u015b\u015c\3\2\2\2\u015c\u0160\3\2\2\2"+
 		"\u015d\u015e\7\t\2\2\u015e\u0160\5\26\f\2\u015f\u0158\3\2\2\2\u015f\u015d"+
-		"\3\2\2\2\u0160\'\3\2\2\2\u0161\u0162\7\17\2\2\u0162\u0163\5*\26\2\u0163"+
-		"\u0164\7\20\2\2\u0164)\3\2\2\2\u0165\u0166\5,\27\2\u0166\u0167\5\u00ca"+
+		"\3\2\2\2\u0160\'\3\2\2\2\u0161\u0162\7\16\2\2\u0162\u0163\5*\26\2\u0163"+
+		"\u0164\7\17\2\2\u0164)\3\2\2\2\u0165\u0166\5,\27\2\u0166\u0167\5\u00ca"+
 		"f\2\u0167\u0169\3\2\2\2\u0168\u0165\3\2\2\2\u0169\u016c\3\2\2\2\u016a"+
 		"\u0168\3\2\2\2\u016a\u016b\3\2\2\2\u016b+\3\2\2\2\u016c\u016a\3\2\2\2"+
 		"\u016d\u017d\5\16\b\2\u016e\u017d\5> \2\u016f\u017d\5.\30\2\u0170\u017d"+
@@ -6666,12 +6771,12 @@ public class GolangParser extends Parser {
 		"\u0185\5<\37\2\u0184\u017e\3\2\2\2\u0184\u017f\3\2\2\2\u0184\u0180\3\2"+
 		"\2\2\u0184\u0181\3\2\2\2\u0184\u0182\3\2\2\2\u0184\u0183\3\2\2\2\u0185"+
 		"/\3\2\2\2\u0186\u0187\5\u00c4c\2\u0187\61\3\2\2\2\u0188\u0189\5\u00c4"+
-		"c\2\u0189\u018a\7\21\2\2\u018a\u018b\5\u00c4c\2\u018b\63\3\2\2\2\u018c"+
+		"c\2\u0189\u018a\7\20\2\2\u018a\u018b\5\u00c4c\2\u018b\63\3\2\2\2\u018c"+
 		"\u018d\5\u00c4c\2\u018d\u018e\t\3\2\2\u018e\65\3\2\2\2\u018f\u0190\5\26"+
 		"\f\2\u0190\u0191\58\35\2\u0191\u0192\5\26\f\2\u0192\67\3\2\2\2\u0193\u0195"+
 		"\t\4\2\2\u0194\u0193\3\2\2\2\u0194\u0195\3\2\2\2\u0195\u0196\3\2\2\2\u0196"+
-		"\u0197\7\t\2\2\u01979\3\2\2\2\u0198\u0199\5\24\13\2\u0199\u019a\7\37\2"+
-		"\2\u019a\u019b\5\26\f\2\u019b;\3\2\2\2\u019c\u019d\7\f\2\2\u019d=\3\2"+
+		"\u0197\7\t\2\2\u01979\3\2\2\2\u0198\u0199\5\24\13\2\u0199\u019a\7\36\2"+
+		"\2\u019a\u019b\5\26\f\2\u019b;\3\2\2\2\u019c\u019d\7\37\2\2\u019d=\3\2"+
 		"\2\2\u019e\u019f\7@\2\2\u019f\u01a0\7 \2\2\u01a0\u01a1\5,\27\2\u01a1?"+
 		"\3\2\2\2\u01a2\u01a4\7!\2\2\u01a3\u01a5\5\26\f\2\u01a4\u01a3\3\2\2\2\u01a4"+
 		"\u01a5\3\2\2\2\u01a5A\3\2\2\2\u01a6\u01a8\7\"\2\2\u01a7\u01a9\7@\2\2\u01a8"+
@@ -6679,53 +6784,53 @@ public class GolangParser extends Parser {
 		"\u01ad\7@\2\2\u01ac\u01ab\3\2\2\2\u01ac\u01ad\3\2\2\2\u01adE\3\2\2\2\u01ae"+
 		"\u01af\7$\2\2\u01af\u01b0\7@\2\2\u01b0G\3\2\2\2\u01b1\u01b2\7%\2\2\u01b2"+
 		"I\3\2\2\2\u01b3\u01b4\7&\2\2\u01b4\u01b5\5\u00c4c\2\u01b5K\3\2\2\2\u01b6"+
-		"\u01ba\7\'\2\2\u01b7\u01b8\5.\30\2\u01b8\u01b9\7\f\2\2\u01b9\u01bb\3\2"+
-		"\2\2\u01ba\u01b7\3\2\2\2\u01ba\u01bb\3\2\2\2\u01bb\u01bc\3\2\2\2\u01bc"+
+		"\u01ba\7\'\2\2\u01b7\u01b8\5.\30\2\u01b8\u01b9\7\37\2\2\u01b9\u01bb\3"+
+		"\2\2\2\u01ba\u01b7\3\2\2\2\u01ba\u01bb\3\2\2\2\u01bb\u01bc\3\2\2\2\u01bc"+
 		"\u01bd\5\u00c4c\2\u01bd\u01c3\5(\25\2\u01be\u01c1\7(\2\2\u01bf\u01c2\5"+
 		"L\'\2\u01c0\u01c2\5(\25\2\u01c1\u01bf\3\2\2\2\u01c1\u01c0\3\2\2\2\u01c2"+
 		"\u01c4\3\2\2\2\u01c3\u01be\3\2\2\2\u01c3\u01c4\3\2\2\2\u01c4M\3\2\2\2"+
 		"\u01c5\u01c8\5P)\2\u01c6\u01c8\5V,\2\u01c7\u01c5\3\2\2\2\u01c7\u01c6\3"+
 		"\2\2\2\u01c8O\3\2\2\2\u01c9\u01cd\7)\2\2\u01ca\u01cb\5.\30\2\u01cb\u01cc"+
-		"\7\f\2\2\u01cc\u01ce\3\2\2\2\u01cd\u01ca\3\2\2\2\u01cd\u01ce\3\2\2\2\u01ce"+
-		"\u01d0\3\2\2\2\u01cf\u01d1\5\u00c4c\2\u01d0\u01cf\3\2\2\2\u01d0\u01d1"+
-		"\3\2\2\2\u01d1\u01d2\3\2\2\2\u01d2\u01d6\7\17\2\2\u01d3\u01d5\5R*\2\u01d4"+
-		"\u01d3\3\2\2\2\u01d5\u01d8\3\2\2\2\u01d6\u01d4\3\2\2\2\u01d6\u01d7\3\2"+
-		"\2\2\u01d7\u01d9\3\2\2\2\u01d8\u01d6\3\2\2\2\u01d9\u01da\7\20\2\2\u01da"+
-		"Q\3\2\2\2\u01db\u01dc\5T+\2\u01dc\u01dd\7 \2\2\u01dd\u01de\5*\26\2\u01de"+
-		"S\3\2\2\2\u01df\u01e0\7*\2\2\u01e0\u01e3\5\26\f\2\u01e1\u01e3\7+\2\2\u01e2"+
-		"\u01df\3\2\2\2\u01e2\u01e1\3\2\2\2\u01e3U\3\2\2\2\u01e4\u01e8\7)\2\2\u01e5"+
-		"\u01e6\5.\30\2\u01e6\u01e7\7\f\2\2\u01e7\u01e9\3\2\2\2\u01e8\u01e5\3\2"+
-		"\2\2\u01e8\u01e9\3\2\2\2\u01e9\u01ea\3\2\2\2\u01ea\u01eb\5X-\2\u01eb\u01ef"+
-		"\7\17\2\2\u01ec\u01ee\5Z.\2\u01ed\u01ec\3\2\2\2\u01ee\u01f1\3\2\2\2\u01ef"+
-		"\u01ed\3\2\2\2\u01ef\u01f0\3\2\2\2\u01f0\u01f2\3\2\2\2\u01f1\u01ef\3\2"+
-		"\2\2\u01f2\u01f3\7\20\2\2\u01f3W\3\2\2\2\u01f4\u01f5\7@\2\2\u01f5\u01f7"+
-		"\7\37\2\2\u01f6\u01f4\3\2\2\2\u01f6\u01f7\3\2\2\2\u01f7\u01f8\3\2\2\2"+
-		"\u01f8\u01f9\5\u00b4[\2\u01f9\u01fa\7\7\2\2\u01fa\u01fb\7\5\2\2\u01fb"+
-		"\u01fc\7\13\2\2\u01fc\u01fd\7\6\2\2\u01fdY\3\2\2\2\u01fe\u01ff\5\\/\2"+
-		"\u01ff\u0200\7 \2\2\u0200\u0201\5*\26\2\u0201[\3\2\2\2\u0202\u0203\7*"+
-		"\2\2\u0203\u0206\5^\60\2\u0204\u0206\7+\2\2\u0205\u0202\3\2\2\2\u0205"+
+		"\7\37\2\2\u01cc\u01ce\3\2\2\2\u01cd\u01ca\3\2\2\2\u01cd\u01ce\3\2\2\2"+
+		"\u01ce\u01d0\3\2\2\2\u01cf\u01d1\5\u00c4c\2\u01d0\u01cf\3\2\2\2\u01d0"+
+		"\u01d1\3\2\2\2\u01d1\u01d2\3\2\2\2\u01d2\u01d6\7\16\2\2\u01d3\u01d5\5"+
+		"R*\2\u01d4\u01d3\3\2\2\2\u01d5\u01d8\3\2\2\2\u01d6\u01d4\3\2\2\2\u01d6"+
+		"\u01d7\3\2\2\2\u01d7\u01d9\3\2\2\2\u01d8\u01d6\3\2\2\2\u01d9\u01da\7\17"+
+		"\2\2\u01daQ\3\2\2\2\u01db\u01dc\5T+\2\u01dc\u01dd\7 \2\2\u01dd\u01de\5"+
+		"*\26\2\u01deS\3\2\2\2\u01df\u01e0\7*\2\2\u01e0\u01e3\5\26\f\2\u01e1\u01e3"+
+		"\7+\2\2\u01e2\u01df\3\2\2\2\u01e2\u01e1\3\2\2\2\u01e3U\3\2\2\2\u01e4\u01e8"+
+		"\7)\2\2\u01e5\u01e6\5.\30\2\u01e6\u01e7\7\37\2\2\u01e7\u01e9\3\2\2\2\u01e8"+
+		"\u01e5\3\2\2\2\u01e8\u01e9\3\2\2\2\u01e9\u01ea\3\2\2\2\u01ea\u01eb\5X"+
+		"-\2\u01eb\u01ef\7\16\2\2\u01ec\u01ee\5Z.\2\u01ed\u01ec\3\2\2\2\u01ee\u01f1"+
+		"\3\2\2\2\u01ef\u01ed\3\2\2\2\u01ef\u01f0\3\2\2\2\u01f0\u01f2\3\2\2\2\u01f1"+
+		"\u01ef\3\2\2\2\u01f2\u01f3\7\17\2\2\u01f3W\3\2\2\2\u01f4\u01f5\7@\2\2"+
+		"\u01f5\u01f7\7\36\2\2\u01f6\u01f4\3\2\2\2\u01f6\u01f7\3\2\2\2\u01f7\u01f8"+
+		"\3\2\2\2\u01f8\u01f9\5\u00b4[\2\u01f9\u01fa\7\7\2\2\u01fa\u01fb\7\5\2"+
+		"\2\u01fb\u01fc\7\13\2\2\u01fc\u01fd\7\6\2\2\u01fdY\3\2\2\2\u01fe\u01ff"+
+		"\5\\/\2\u01ff\u0200\7 \2\2\u0200\u0201\5*\26\2\u0201[\3\2\2\2\u0202\u0203"+
+		"\7*\2\2\u0203\u0206\5^\60\2\u0204\u0206\7+\2\2\u0205\u0202\3\2\2\2\u0205"+
 		"\u0204\3\2\2\2\u0206]\3\2\2\2\u0207\u020c\5p9\2\u0208\u0209\7\n\2\2\u0209"+
 		"\u020b\5p9\2\u020a\u0208\3\2\2\2\u020b\u020e\3\2\2\2\u020c\u020a\3\2\2"+
 		"\2\u020c\u020d\3\2\2\2\u020d_\3\2\2\2\u020e\u020c\3\2\2\2\u020f\u0210"+
-		"\7,\2\2\u0210\u0214\7\17\2\2\u0211\u0213\5b\62\2\u0212\u0211\3\2\2\2\u0213"+
+		"\7,\2\2\u0210\u0214\7\16\2\2\u0211\u0213\5b\62\2\u0212\u0211\3\2\2\2\u0213"+
 		"\u0216\3\2\2\2\u0214\u0212\3\2\2\2\u0214\u0215\3\2\2\2\u0215\u0217\3\2"+
-		"\2\2\u0216\u0214\3\2\2\2\u0217\u0218\7\20\2\2\u0218a\3\2\2\2\u0219\u021a"+
+		"\2\2\u0216\u0214\3\2\2\2\u0217\u0218\7\17\2\2\u0218a\3\2\2\2\u0219\u021a"+
 		"\5d\63\2\u021a\u021b\7 \2\2\u021b\u021c\5*\26\2\u021cc\3\2\2\2\u021d\u0220"+
 		"\7*\2\2\u021e\u0221\5\62\32\2\u021f\u0221\5f\64\2\u0220\u021e\3\2\2\2"+
 		"\u0220\u021f\3\2\2\2\u0221\u0224\3\2\2\2\u0222\u0224\7+\2\2\u0223\u021d"+
 		"\3\2\2\2\u0223\u0222\3\2\2\2\u0224e\3\2\2\2\u0225\u0226\5\26\f\2\u0226"+
 		"\u0227\7\t\2\2\u0227\u022c\3\2\2\2\u0228\u0229\5\24\13\2\u0229\u022a\7"+
-		"\37\2\2\u022a\u022c\3\2\2\2\u022b\u0225\3\2\2\2\u022b\u0228\3\2\2\2\u022b"+
+		"\36\2\2\u022a\u022c\3\2\2\2\u022b\u0225\3\2\2\2\u022b\u0228\3\2\2\2\u022b"+
 		"\u022c\3\2\2\2\u022c\u022d\3\2\2\2\u022d\u022e\5\u00c4c\2\u022eg\3\2\2"+
 		"\2\u022f\u0233\7-\2\2\u0230\u0234\5\u00c4c\2\u0231\u0234\5j\66\2\u0232"+
 		"\u0234\5l\67\2\u0233\u0230\3\2\2\2\u0233\u0231\3\2\2\2\u0233\u0232\3\2"+
 		"\2\2\u0233\u0234\3\2\2\2\u0234\u0235\3\2\2\2\u0235\u0236\5(\25\2\u0236"+
 		"i\3\2\2\2\u0237\u0239\5.\30\2\u0238\u0237\3\2\2\2\u0238\u0239\3\2\2\2"+
-		"\u0239\u023a\3\2\2\2\u023a\u023c\7\f\2\2\u023b\u023d\5\u00c4c\2\u023c"+
-		"\u023b\3\2\2\2\u023c\u023d\3\2\2\2\u023d\u023e\3\2\2\2\u023e\u0240\7\f"+
+		"\u0239\u023a\3\2\2\2\u023a\u023c\7\37\2\2\u023b\u023d\5\u00c4c\2\u023c"+
+		"\u023b\3\2\2\2\u023c\u023d\3\2\2\2\u023d\u023e\3\2\2\2\u023e\u0240\7\37"+
 		"\2\2\u023f\u0241\5.\30\2\u0240\u023f\3\2\2\2\u0240\u0241\3\2\2\2\u0241"+
 		"k\3\2\2\2\u0242\u0243\5\26\f\2\u0243\u0244\7\t\2\2\u0244\u0249\3\2\2\2"+
-		"\u0245\u0246\5\24\13\2\u0246\u0247\7\37\2\2\u0247\u0249\3\2\2\2\u0248"+
+		"\u0245\u0246\5\24\13\2\u0246\u0247\7\36\2\2\u0247\u0249\3\2\2\2\u0248"+
 		"\u0242\3\2\2\2\u0248\u0245\3\2\2\2\u0248\u0249\3\2\2\2\u0249\u024a\3\2"+
 		"\2\2\u024a\u024b\7.\2\2\u024b\u024c\5\u00c4c\2\u024cm\3\2\2\2\u024d\u024e"+
 		"\7/\2\2\u024e\u024f\5\u00c4c\2\u024fo\3\2\2\2\u0250\u0257\5r:\2\u0251"+
@@ -6740,114 +6845,117 @@ public class GolangParser extends Parser {
 		"\2\2\u0264\u0263\3\2\2\2\u0265u\3\2\2\2\u0266\u0267\7\60\2\2\u0267\u0268"+
 		"\5x=\2\u0268\u0269\7\61\2\2\u0269\u026a\5z>\2\u026aw\3\2\2\2\u026b\u026c"+
 		"\5\u00c4c\2\u026cy\3\2\2\2\u026d\u026e\5p9\2\u026e{\3\2\2\2\u026f\u0270"+
-		"\7\30\2\2\u0270\u0271\5p9\2\u0271}\3\2\2\2\u0272\u0273\7\62\2\2\u0273"+
-		"\u0279\7\17\2\2\u0274\u0275\5\u0086D\2\u0275\u0276\5\u00caf\2\u0276\u0278"+
+		"\7\27\2\2\u0270\u0271\5p9\2\u0271}\3\2\2\2\u0272\u0273\7\62\2\2\u0273"+
+		"\u0279\7\16\2\2\u0274\u0275\5\u0086D\2\u0275\u0276\5\u00caf\2\u0276\u0278"+
 		"\3\2\2\2\u0277\u0274\3\2\2\2\u0278\u027b\3\2\2\2\u0279\u0277\3\2\2\2\u0279"+
-		"\u027a\3\2\2\2\u027a\u027c\3\2\2\2\u027b\u0279\3\2\2\2\u027c\u027d\7\20"+
+		"\u027a\3\2\2\2\u027a\u027c\3\2\2\2\u027b\u0279\3\2\2\2\u027c\u027d\7\17"+
 		"\2\2\u027d\177\3\2\2\2\u027e\u027f\7\60\2\2\u027f\u0280\7\61\2\2\u0280"+
 		"\u0281\5z>\2\u0281\u0081\3\2\2\2\u0282\u0283\7\63\2\2\u0283\u0284\7\60"+
 		"\2\2\u0284\u0285\5p9\2\u0285\u0286\7\61\2\2\u0286\u0287\5z>\2\u0287\u0083"+
-		"\3\2\2\2\u0288\u028e\7\64\2\2\u0289\u028a\7\64\2\2\u028a\u028e\7\21\2"+
-		"\2\u028b\u028c\7\21\2\2\u028c\u028e\7\64\2\2\u028d\u0288\3\2\2\2\u028d"+
+		"\3\2\2\2\u0288\u028e\7\64\2\2\u0289\u028a\7\64\2\2\u028a\u028e\7\20\2"+
+		"\2\u028b\u028c\7\20\2\2\u028c\u028e\7\64\2\2\u028d\u0288\3\2\2\2\u028d"+
 		"\u0289\3\2\2\2\u028d\u028b\3\2\2\2\u028e\u028f\3\2\2\2\u028f\u0290\5z"+
-		">\2\u0290\u0085\3\2\2\2\u0291\u0292\7@\2\2\u0292\u0295\5\u008aF\2\u0293"+
-		"\u0295\5r:\2\u0294\u0291\3\2\2\2\u0294\u0293\3\2\2\2\u0295\u0087\3\2\2"+
-		"\2\u0296\u0297\7\r\2\2\u0297\u0298\5\u008aF\2\u0298\u0089\3\2\2\2\u0299"+
-		"\u029b\5\u008eH\2\u029a\u029c\5\u008cG\2\u029b\u029a\3\2\2\2\u029b\u029c"+
-		"\3\2\2\2\u029c\u008b\3\2\2\2\u029d\u02a0\5\u008eH\2\u029e\u02a0\5p9\2"+
-		"\u029f\u029d\3\2\2\2\u029f\u029e\3\2\2\2\u02a0\u008d\3\2\2\2\u02a1\u02a6"+
-		"\7\5\2\2\u02a2\u02a4\5\u0090I\2\u02a3\u02a5\7\n\2\2\u02a4\u02a3\3\2\2"+
-		"\2\u02a4\u02a5\3\2\2\2\u02a5\u02a7\3\2\2\2\u02a6\u02a2\3\2\2\2\u02a6\u02a7"+
-		"\3\2\2\2\u02a7\u02a8\3\2\2\2\u02a8\u02a9\7\6\2\2\u02a9\u008f\3\2\2\2\u02aa"+
-		"\u02af\5\u0092J\2\u02ab\u02ac\7\n\2\2\u02ac\u02ae\5\u0092J\2\u02ad\u02ab"+
-		"\3\2\2\2\u02ae\u02b1\3\2\2\2\u02af\u02ad\3\2\2\2\u02af\u02b0\3\2\2\2\u02b0"+
-		"\u0091\3\2\2\2\u02b1\u02af\3\2\2\2\u02b2\u02b4\5\24\13\2\u02b3\u02b2\3"+
-		"\2\2\2\u02b3\u02b4\3\2\2\2\u02b4\u02b6\3\2\2\2\u02b5\u02b7\7\65\2\2\u02b6"+
-		"\u02b5\3\2\2\2\u02b6\u02b7\3\2\2\2\u02b7\u02b8\3\2\2\2\u02b8\u02b9\5p"+
-		"9\2\u02b9\u0093\3\2\2\2\u02ba\u02c2\5\u0096L\2\u02bb\u02c2\5\u009aN\2"+
-		"\u02bc\u02c2\5\u00c0a\2\u02bd\u02be\7\5\2\2\u02be\u02bf\5\u00c4c\2\u02bf"+
-		"\u02c0\7\6\2\2\u02c0\u02c2\3\2\2\2\u02c1\u02ba\3\2\2\2\u02c1\u02bb\3\2"+
-		"\2\2\u02c1\u02bc\3\2\2\2\u02c1\u02bd\3\2\2\2\u02c2\u0095\3\2\2\2\u02c3"+
-		"\u02c7\5\u0098M\2\u02c4\u02c7\5\u009eP\2\u02c5\u02c7\5\u00b2Z\2\u02c6"+
-		"\u02c3\3\2\2\2\u02c6\u02c4\3\2\2\2\u02c6\u02c5\3\2\2\2\u02c7\u0097\3\2"+
-		"\2\2\u02c8\u02c9\t\5\2\2\u02c9\u0099\3\2\2\2\u02ca\u02cd\7@\2\2\u02cb"+
-		"\u02cd\5\u009cO\2\u02cc\u02ca\3\2\2\2\u02cc\u02cb\3\2\2\2\u02cd\u009b"+
-		"\3\2\2\2\u02ce\u02cf\7@\2\2\u02cf\u02d0\7\7\2\2\u02d0\u02d1\7@\2\2\u02d1"+
-		"\u009d\3\2\2\2\u02d2\u02d3\5\u00a0Q\2\u02d3\u02d4\5\u00a2R\2\u02d4\u009f"+
-		"\3\2\2\2\u02d5\u02df\5\u00acW\2\u02d6\u02df\5v<\2\u02d7\u02d8\7\60\2\2"+
-		"\u02d8\u02d9\7\65\2\2\u02d9\u02da\7\61\2\2\u02da\u02df\5z>\2\u02db\u02df"+
-		"\5\u0080A\2\u02dc\u02df\5\u0082B\2\u02dd\u02df\5r:\2\u02de\u02d5\3\2\2"+
-		"\2\u02de\u02d6\3\2\2\2\u02de\u02d7\3\2\2\2\u02de\u02db\3\2\2\2\u02de\u02dc"+
-		"\3\2\2\2\u02de\u02dd\3\2\2\2\u02df\u00a1\3\2\2\2\u02e0\u02e5\7\17\2\2"+
-		"\u02e1\u02e3\5\u00a4S\2\u02e2\u02e4\7\n\2\2\u02e3\u02e2\3\2\2\2\u02e3"+
-		"\u02e4\3\2\2\2\u02e4\u02e6\3\2\2\2\u02e5\u02e1\3\2\2\2\u02e5\u02e6\3\2"+
-		"\2\2\u02e6\u02e7\3\2\2\2\u02e7\u02e8\7\20\2\2\u02e8\u00a3\3\2\2\2\u02e9"+
-		"\u02ee\5\u00a6T\2\u02ea\u02eb\7\n\2\2\u02eb\u02ed\5\u00a6T\2\u02ec\u02ea"+
-		"\3\2\2\2\u02ed\u02f0\3\2\2\2\u02ee\u02ec\3\2\2\2\u02ee\u02ef\3\2\2\2\u02ef"+
-		"\u00a5\3\2\2\2\u02f0\u02ee\3\2\2\2\u02f1\u02f2\5\u00a8U\2\u02f2\u02f3"+
-		"\7 \2\2\u02f3\u02f5\3\2\2\2\u02f4\u02f1\3\2\2\2\u02f4\u02f5\3\2\2\2\u02f5"+
-		"\u02f6\3\2\2\2\u02f6\u02f7\5\u00aaV\2\u02f7\u00a7\3\2\2\2\u02f8\u02fc"+
-		"\7@\2\2\u02f9\u02fc\5\u00c4c\2\u02fa\u02fc\5\u00a2R\2\u02fb\u02f8\3\2"+
-		"\2\2\u02fb\u02f9\3\2\2\2\u02fb\u02fa\3\2\2\2\u02fc\u00a9\3\2\2\2\u02fd"+
-		"\u0300\5\u00c4c\2\u02fe\u0300\5\u00a2R\2\u02ff\u02fd\3\2\2\2\u02ff\u02fe"+
-		"\3\2\2\2\u0300\u00ab\3\2\2\2\u0301\u0302\7\66\2\2\u0302\u0308\7\17\2\2"+
-		"\u0303\u0304\5\u00aeX\2\u0304\u0305\5\u00caf\2\u0305\u0307\3\2\2\2\u0306"+
-		"\u0303\3\2\2\2\u0307\u030a\3\2\2\2\u0308\u0306\3\2\2\2\u0308\u0309\3\2"+
-		"\2\2\u0309\u030b\3\2\2\2\u030a\u0308\3\2\2\2\u030b\u030c\7\20\2\2\u030c"+
-		"\u00ad\3\2\2\2\u030d\u030e\5\24\13\2\u030e\u030f\5p9\2\u030f\u0312\3\2"+
-		"\2\2\u0310\u0312\5\u00b0Y\2\u0311\u030d\3\2\2\2\u0311\u0310\3\2\2\2\u0312"+
-		"\u0314\3\2\2\2\u0313\u0315\7I\2\2\u0314\u0313\3\2\2\2\u0314\u0315\3\2"+
-		"\2\2\u0315\u00af\3\2\2\2\u0316\u0318\7\30\2\2\u0317\u0316\3\2\2\2\u0317"+
-		"\u0318\3\2\2\2\u0318\u0319\3\2\2\2\u0319\u031a\5r:\2\u031a\u00b1\3\2\2"+
-		"\2\u031b\u031c\7\r\2\2\u031c\u031d\5\36\20\2\u031d\u00b3\3\2\2\2\u031e"+
-		"\u031f\b[\1\2\u031f\u0322\5\u0094K\2\u0320\u0322\5\u00c8e\2\u0321\u031e"+
-		"\3\2\2\2\u0321\u0320\3\2\2\2\u0322\u032f\3\2\2\2\u0323\u0324\f\7\2\2\u0324"+
-		"\u032e\5\u00b6\\\2\u0325\u0326\f\6\2\2\u0326\u032e\5\u00b8]\2\u0327\u0328"+
-		"\f\5\2\2\u0328\u032e\5\u00ba^\2\u0329\u032a\f\4\2\2\u032a\u032e\5\u00bc"+
-		"_\2\u032b\u032c\f\3\2\2\u032c\u032e\5\u00be`\2\u032d\u0323\3\2\2\2\u032d"+
-		"\u0325\3\2\2\2\u032d\u0327\3\2\2\2\u032d\u0329\3\2\2\2\u032d\u032b\3\2"+
-		"\2\2\u032e\u0331\3\2\2\2\u032f\u032d\3\2\2\2\u032f\u0330\3\2\2\2\u0330"+
-		"\u00b5\3\2\2\2\u0331\u032f\3\2\2\2\u0332\u0333\7\7\2\2\u0333\u0334\7@"+
-		"\2\2\u0334\u00b7\3\2\2\2\u0335\u0336\7\60\2\2\u0336\u0337\5\u00c4c\2\u0337"+
-		"\u0338\7\61\2\2\u0338\u00b9\3\2\2\2\u0339\u0349\7\60\2\2\u033a\u033c\5"+
-		"\u00c4c\2\u033b\u033a\3\2\2\2\u033b\u033c\3\2\2\2\u033c\u033d\3\2\2\2"+
-		"\u033d\u033f\7 \2\2\u033e\u0340\5\u00c4c\2\u033f\u033e\3\2\2\2\u033f\u0340"+
-		"\3\2\2\2\u0340\u034a\3\2\2\2\u0341\u0343\5\u00c4c\2\u0342\u0341\3\2\2"+
-		"\2\u0342\u0343\3\2\2\2\u0343\u0344\3\2\2\2\u0344\u0345\7 \2\2\u0345\u0346"+
-		"\5\u00c4c\2\u0346\u0347\7 \2\2\u0347\u0348\5\u00c4c\2\u0348\u034a\3\2"+
-		"\2\2\u0349\u033b\3\2\2\2\u0349\u0342\3\2\2\2\u034a\u034b\3\2\2\2\u034b"+
-		"\u034c\7\61\2\2\u034c\u00bb\3\2\2\2\u034d\u034e\7\7\2\2\u034e\u034f\7"+
-		"\5\2\2\u034f\u0350\5p9\2\u0350\u0351\7\6\2\2\u0351\u00bd\3\2\2\2\u0352"+
-		"\u0361\7\5\2\2\u0353\u035a\5\26\f\2\u0354\u0357\5p9\2\u0355\u0356\7\n"+
-		"\2\2\u0356\u0358\5\26\f\2\u0357\u0355\3\2\2\2\u0357\u0358\3\2\2\2\u0358"+
-		"\u035a\3\2\2\2\u0359\u0353\3\2\2\2\u0359\u0354\3\2\2\2\u035a\u035c\3\2"+
-		"\2\2\u035b\u035d\7\65\2\2\u035c\u035b\3\2\2\2\u035c\u035d\3\2\2\2\u035d"+
-		"\u035f\3\2\2\2\u035e\u0360\7\n\2\2\u035f\u035e\3\2\2\2\u035f\u0360\3\2"+
-		"\2\2\u0360\u0362\3\2\2\2\u0361\u0359\3\2\2\2\u0361\u0362\3\2\2\2\u0362"+
-		"\u0363\3\2\2\2\u0363\u0364\7\6\2\2\u0364\u00bf\3\2\2\2\u0365\u0366\5\u00c2"+
-		"b\2\u0366\u0367\7\7\2\2\u0367\u0368\7@\2\2\u0368\u00c1\3\2\2\2\u0369\u0374"+
-		"\5r:\2\u036a\u036b\7\5\2\2\u036b\u036c\7\30\2\2\u036c\u036d\5r:\2\u036d"+
-		"\u036e\7\6\2\2\u036e\u0374\3\2\2\2\u036f\u0370\7\5\2\2\u0370\u0371\5\u00c2"+
-		"b\2\u0371\u0372\7\6\2\2\u0372\u0374\3\2\2\2\u0373\u0369\3\2\2\2\u0373"+
-		"\u036a\3\2\2\2\u0373\u036f\3\2\2\2\u0374\u00c3\3\2\2\2\u0375\u0376\bc"+
-		"\1\2\u0376\u0377\5\u00c6d\2\u0377\u037d\3\2\2\2\u0378\u0379\f\3\2\2\u0379"+
-		"\u037a\t\6\2\2\u037a\u037c\5\u00c4c\4\u037b\u0378\3\2\2\2\u037c\u037f"+
-		"\3\2\2\2\u037d\u037b\3\2\2\2\u037d\u037e\3\2\2\2\u037e\u00c5\3\2\2\2\u037f"+
-		"\u037d\3\2\2\2\u0380\u0384\5\u00b4[\2\u0381\u0382\t\7\2\2\u0382\u0384"+
-		"\5\u00c6d\2\u0383\u0380\3\2\2\2\u0383\u0381\3\2\2\2\u0384\u00c7\3\2\2"+
-		"\2\u0385\u0386\5p9\2\u0386\u0387\7\5\2\2\u0387\u0389\5\u00c4c\2\u0388"+
-		"\u038a\7\n\2\2\u0389\u0388\3\2\2\2\u0389\u038a\3\2\2\2\u038a\u038b\3\2"+
-		"\2\2\u038b\u038c\7\6\2\2\u038c\u00c9\3\2\2\2\u038d\u0392\7\f\2\2\u038e"+
-		"\u0392\7\2\2\3\u038f\u0392\6f\b\2\u0390\u0392\6f\t\2\u0391\u038d\3\2\2"+
-		"\2\u0391\u038e\3\2\2\2\u0391\u038f\3\2\2\2\u0391\u0390\3\2\2\2\u0392\u00cb"+
-		"\3\2\2\2`\u00d3\u00db\u00e9\u00ed\u00f0\u00f9\u00fe\u0108\u010c\u0110"+
-		"\u0114\u011b\u0123\u012e\u0132\u013b\u0145\u0151\u0155\u015b\u015f\u016a"+
-		"\u017c\u0184\u0194\u01a4\u01a8\u01ac\u01ba\u01c1\u01c3\u01c7\u01cd\u01d0"+
-		"\u01d6\u01e2\u01e8\u01ef\u01f6\u0205\u020c\u0214\u0220\u0223\u022b\u0233"+
-		"\u0238\u023c\u0240\u0248\u0256\u025a\u0264\u0279\u028d\u0294\u029b\u029f"+
-		"\u02a4\u02a6\u02af\u02b3\u02b6\u02c1\u02c6\u02cc\u02de\u02e3\u02e5\u02ee"+
-		"\u02f4\u02fb\u02ff\u0308\u0311\u0314\u0317\u0321\u032d\u032f\u033b\u033f"+
-		"\u0342\u0349\u0357\u0359\u035c\u035f\u0361\u0373\u037d\u0383\u0389\u0391";
+		">\2\u0290\u0085\3\2\2\2\u0291\u0292\6D\2\2\u0292\u0293\7@\2\2\u0293\u0294"+
+		"\5\u008eH\2\u0294\u0295\5\u008cG\2\u0295\u029a\3\2\2\2\u0296\u029a\5r"+
+		":\2\u0297\u0298\7@\2\2\u0298\u029a\5\u008eH\2\u0299\u0291\3\2\2\2\u0299"+
+		"\u0296\3\2\2\2\u0299\u0297\3\2\2\2\u029a\u0087\3\2\2\2\u029b\u029c\7\f"+
+		"\2\2\u029c\u029d\5\u008aF\2\u029d\u0089\3\2\2\2\u029e\u02a0\5\u008eH\2"+
+		"\u029f\u02a1\5\u008cG\2\u02a0\u029f\3\2\2\2\u02a0\u02a1\3\2\2\2\u02a1"+
+		"\u008b\3\2\2\2\u02a2\u02a5\5\u008eH\2\u02a3\u02a5\5p9\2\u02a4\u02a2\3"+
+		"\2\2\2\u02a4\u02a3\3\2\2\2\u02a5\u008d\3\2\2\2\u02a6\u02ab\7\5\2\2\u02a7"+
+		"\u02a9\5\u0090I\2\u02a8\u02aa\7\n\2\2\u02a9\u02a8\3\2\2\2\u02a9\u02aa"+
+		"\3\2\2\2\u02aa\u02ac\3\2\2\2\u02ab\u02a7\3\2\2\2\u02ab\u02ac\3\2\2\2\u02ac"+
+		"\u02ad\3\2\2\2\u02ad\u02ae\7\6\2\2\u02ae\u008f\3\2\2\2\u02af\u02b4\5\u0092"+
+		"J\2\u02b0\u02b1\7\n\2\2\u02b1\u02b3\5\u0092J\2\u02b2\u02b0\3\2\2\2\u02b3"+
+		"\u02b6\3\2\2\2\u02b4\u02b2\3\2\2\2\u02b4\u02b5\3\2\2\2\u02b5\u0091\3\2"+
+		"\2\2\u02b6\u02b4\3\2\2\2\u02b7\u02b9\5\24\13\2\u02b8\u02b7\3\2\2\2\u02b8"+
+		"\u02b9\3\2\2\2\u02b9\u02bb\3\2\2\2\u02ba\u02bc\7\65\2\2\u02bb\u02ba\3"+
+		"\2\2\2\u02bb\u02bc\3\2\2\2\u02bc\u02bd\3\2\2\2\u02bd\u02be\5p9\2\u02be"+
+		"\u0093\3\2\2\2\u02bf\u02c7\5\u0096L\2\u02c0\u02c7\5\u009aN\2\u02c1\u02c7"+
+		"\5\u00c0a\2\u02c2\u02c3\7\5\2\2\u02c3\u02c4\5\u00c4c\2\u02c4\u02c5\7\6"+
+		"\2\2\u02c5\u02c7\3\2\2\2\u02c6\u02bf\3\2\2\2\u02c6\u02c0\3\2\2\2\u02c6"+
+		"\u02c1\3\2\2\2\u02c6\u02c2\3\2\2\2\u02c7\u0095\3\2\2\2\u02c8\u02cc\5\u0098"+
+		"M\2\u02c9\u02cc\5\u009eP\2\u02ca\u02cc\5\u00b2Z\2\u02cb\u02c8\3\2\2\2"+
+		"\u02cb\u02c9\3\2\2\2\u02cb\u02ca\3\2\2\2\u02cc\u0097\3\2\2\2\u02cd\u02ce"+
+		"\t\5\2\2\u02ce\u0099\3\2\2\2\u02cf\u02d2\7@\2\2\u02d0\u02d2\5\u009cO\2"+
+		"\u02d1\u02cf\3\2\2\2\u02d1\u02d0\3\2\2\2\u02d2\u009b\3\2\2\2\u02d3\u02d4"+
+		"\7@\2\2\u02d4\u02d5\7\7\2\2\u02d5\u02d6\7@\2\2\u02d6\u009d\3\2\2\2\u02d7"+
+		"\u02d8\5\u00a0Q\2\u02d8\u02d9\5\u00a2R\2\u02d9\u009f\3\2\2\2\u02da\u02e4"+
+		"\5\u00acW\2\u02db\u02e4\5v<\2\u02dc\u02dd\7\60\2\2\u02dd\u02de\7\65\2"+
+		"\2\u02de\u02df\7\61\2\2\u02df\u02e4\5z>\2\u02e0\u02e4\5\u0080A\2\u02e1"+
+		"\u02e4\5\u0082B\2\u02e2\u02e4\5r:\2\u02e3\u02da\3\2\2\2\u02e3\u02db\3"+
+		"\2\2\2\u02e3\u02dc\3\2\2\2\u02e3\u02e0\3\2\2\2\u02e3\u02e1\3\2\2\2\u02e3"+
+		"\u02e2\3\2\2\2\u02e4\u00a1\3\2\2\2\u02e5\u02ea\7\16\2\2\u02e6\u02e8\5"+
+		"\u00a4S\2\u02e7\u02e9\7\n\2\2\u02e8\u02e7\3\2\2\2\u02e8\u02e9\3\2\2\2"+
+		"\u02e9\u02eb\3\2\2\2\u02ea\u02e6\3\2\2\2\u02ea\u02eb\3\2\2\2\u02eb\u02ec"+
+		"\3\2\2\2\u02ec\u02ed\7\17\2\2\u02ed\u00a3\3\2\2\2\u02ee\u02f3\5\u00a6"+
+		"T\2\u02ef\u02f0\7\n\2\2\u02f0\u02f2\5\u00a6T\2\u02f1\u02ef\3\2\2\2\u02f2"+
+		"\u02f5\3\2\2\2\u02f3\u02f1\3\2\2\2\u02f3\u02f4\3\2\2\2\u02f4\u00a5\3\2"+
+		"\2\2\u02f5\u02f3\3\2\2\2\u02f6\u02f7\5\u00a8U\2\u02f7\u02f8\7 \2\2\u02f8"+
+		"\u02fa\3\2\2\2\u02f9\u02f6\3\2\2\2\u02f9\u02fa\3\2\2\2\u02fa\u02fb\3\2"+
+		"\2\2\u02fb\u02fc\5\u00aaV\2\u02fc\u00a7\3\2\2\2\u02fd\u0301\7@\2\2\u02fe"+
+		"\u0301\5\u00c4c\2\u02ff\u0301\5\u00a2R\2\u0300\u02fd\3\2\2\2\u0300\u02fe"+
+		"\3\2\2\2\u0300\u02ff\3\2\2\2\u0301\u00a9\3\2\2\2\u0302\u0305\5\u00c4c"+
+		"\2\u0303\u0305\5\u00a2R\2\u0304\u0302\3\2\2\2\u0304\u0303\3\2\2\2\u0305"+
+		"\u00ab\3\2\2\2\u0306\u0307\7\66\2\2\u0307\u030d\7\16\2\2\u0308\u0309\5"+
+		"\u00aeX\2\u0309\u030a\5\u00caf\2\u030a\u030c\3\2\2\2\u030b\u0308\3\2\2"+
+		"\2\u030c\u030f\3\2\2\2\u030d\u030b\3\2\2\2\u030d\u030e\3\2\2\2\u030e\u0310"+
+		"\3\2\2\2\u030f\u030d\3\2\2\2\u0310\u0311\7\17\2\2\u0311\u00ad\3\2\2\2"+
+		"\u0312\u0313\6X\3\2\u0313\u0314\5\24\13\2\u0314\u0315\5p9\2\u0315\u0318"+
+		"\3\2\2\2\u0316\u0318\5\u00b0Y\2\u0317\u0312\3\2\2\2\u0317\u0316\3\2\2"+
+		"\2\u0318\u031a\3\2\2\2\u0319\u031b\7I\2\2\u031a\u0319\3\2\2\2\u031a\u031b"+
+		"\3\2\2\2\u031b\u00af\3\2\2\2\u031c\u031e\7\27\2\2\u031d\u031c\3\2\2\2"+
+		"\u031d\u031e\3\2\2\2\u031e\u031f\3\2\2\2\u031f\u0320\5r:\2\u0320\u00b1"+
+		"\3\2\2\2\u0321\u0322\7\f\2\2\u0322\u0323\5\36\20\2\u0323\u00b3\3\2\2\2"+
+		"\u0324\u0325\b[\1\2\u0325\u0328\5\u0094K\2\u0326\u0328\5\u00c8e\2\u0327"+
+		"\u0324\3\2\2\2\u0327\u0326\3\2\2\2\u0328\u0335\3\2\2\2\u0329\u032a\f\7"+
+		"\2\2\u032a\u0334\5\u00b6\\\2\u032b\u032c\f\6\2\2\u032c\u0334\5\u00b8]"+
+		"\2\u032d\u032e\f\5\2\2\u032e\u0334\5\u00ba^\2\u032f\u0330\f\4\2\2\u0330"+
+		"\u0334\5\u00bc_\2\u0331\u0332\f\3\2\2\u0332\u0334\5\u00be`\2\u0333\u0329"+
+		"\3\2\2\2\u0333\u032b\3\2\2\2\u0333\u032d\3\2\2\2\u0333\u032f\3\2\2\2\u0333"+
+		"\u0331\3\2\2\2\u0334\u0337\3\2\2\2\u0335\u0333\3\2\2\2\u0335\u0336\3\2"+
+		"\2\2\u0336\u00b5\3\2\2\2\u0337\u0335\3\2\2\2\u0338\u0339\7\7\2\2\u0339"+
+		"\u033a\7@\2\2\u033a\u00b7\3\2\2\2\u033b\u033c\7\60\2\2\u033c\u033d\5\u00c4"+
+		"c\2\u033d\u033e\7\61\2\2\u033e\u00b9\3\2\2\2\u033f\u034f\7\60\2\2\u0340"+
+		"\u0342\5\u00c4c\2\u0341\u0340\3\2\2\2\u0341\u0342\3\2\2\2\u0342\u0343"+
+		"\3\2\2\2\u0343\u0345\7 \2\2\u0344\u0346\5\u00c4c\2\u0345\u0344\3\2\2\2"+
+		"\u0345\u0346\3\2\2\2\u0346\u0350\3\2\2\2\u0347\u0349\5\u00c4c\2\u0348"+
+		"\u0347\3\2\2\2\u0348\u0349\3\2\2\2\u0349\u034a\3\2\2\2\u034a\u034b\7 "+
+		"\2\2\u034b\u034c\5\u00c4c\2\u034c\u034d\7 \2\2\u034d\u034e\5\u00c4c\2"+
+		"\u034e\u0350\3\2\2\2\u034f\u0341\3\2\2\2\u034f\u0348\3\2\2\2\u0350\u0351"+
+		"\3\2\2\2\u0351\u0352\7\61\2\2\u0352\u00bb\3\2\2\2\u0353\u0354\7\7\2\2"+
+		"\u0354\u0355\7\5\2\2\u0355\u0356\5p9\2\u0356\u0357\7\6\2\2\u0357\u00bd"+
+		"\3\2\2\2\u0358\u0367\7\5\2\2\u0359\u0360\5\26\f\2\u035a\u035d\5p9\2\u035b"+
+		"\u035c\7\n\2\2\u035c\u035e\5\26\f\2\u035d\u035b\3\2\2\2\u035d\u035e\3"+
+		"\2\2\2\u035e\u0360\3\2\2\2\u035f\u0359\3\2\2\2\u035f\u035a\3\2\2\2\u0360"+
+		"\u0362\3\2\2\2\u0361\u0363\7\65\2\2\u0362\u0361\3\2\2\2\u0362\u0363\3"+
+		"\2\2\2\u0363\u0365\3\2\2\2\u0364\u0366\7\n\2\2\u0365\u0364\3\2\2\2\u0365"+
+		"\u0366\3\2\2\2\u0366\u0368\3\2\2\2\u0367\u035f\3\2\2\2\u0367\u0368\3\2"+
+		"\2\2\u0368\u0369\3\2\2\2\u0369\u036a\7\6\2\2\u036a\u00bf\3\2\2\2\u036b"+
+		"\u036c\5\u00c2b\2\u036c\u036d\7\7\2\2\u036d\u036e\7@\2\2\u036e\u00c1\3"+
+		"\2\2\2\u036f\u037a\5r:\2\u0370\u0371\7\5\2\2\u0371\u0372\7\27\2\2\u0372"+
+		"\u0373\5r:\2\u0373\u0374\7\6\2\2\u0374\u037a\3\2\2\2\u0375\u0376\7\5\2"+
+		"\2\u0376\u0377\5\u00c2b\2\u0377\u0378\7\6\2\2\u0378\u037a\3\2\2\2\u0379"+
+		"\u036f\3\2\2\2\u0379\u0370\3\2\2\2\u0379\u0375\3\2\2\2\u037a\u00c3\3\2"+
+		"\2\2\u037b\u037c\bc\1\2\u037c\u037d\5\u00c6d\2\u037d\u0383\3\2\2\2\u037e"+
+		"\u037f\f\3\2\2\u037f\u0380\t\6\2\2\u0380\u0382\5\u00c4c\4\u0381\u037e"+
+		"\3\2\2\2\u0382\u0385\3\2\2\2\u0383\u0381\3\2\2\2\u0383\u0384\3\2\2\2\u0384"+
+		"\u00c5\3\2\2\2\u0385\u0383\3\2\2\2\u0386\u038a\5\u00b4[\2\u0387\u0388"+
+		"\t\7\2\2\u0388\u038a\5\u00c6d\2\u0389\u0386\3\2\2\2\u0389\u0387\3\2\2"+
+		"\2\u038a\u00c7\3\2\2\2\u038b\u038c\5p9\2\u038c\u038d\7\5\2\2\u038d\u038f"+
+		"\5\u00c4c\2\u038e\u0390\7\n\2\2\u038f\u038e\3\2\2\2\u038f\u0390\3\2\2"+
+		"\2\u0390\u0391\3\2\2\2\u0391\u0392\7\6\2\2\u0392\u00c9\3\2\2\2\u0393\u0398"+
+		"\7\37\2\2\u0394\u0398\7\2\2\3\u0395\u0398\6f\n\2\u0396\u0398\6f\13\2\u0397"+
+		"\u0393\3\2\2\2\u0397\u0394\3\2\2\2\u0397\u0395\3\2\2\2\u0397\u0396\3\2"+
+		"\2\2\u0398\u00cb\3\2\2\2`\u00d3\u00db\u00e9\u00ed\u00f0\u00f9\u00fe\u0108"+
+		"\u010c\u0110\u0114\u011b\u0123\u012e\u0132\u013b\u0145\u0151\u0155\u015b"+
+		"\u015f\u016a\u017c\u0184\u0194\u01a4\u01a8\u01ac\u01ba\u01c1\u01c3\u01c7"+
+		"\u01cd\u01d0\u01d6\u01e2\u01e8\u01ef\u01f6\u0205\u020c\u0214\u0220\u0223"+
+		"\u022b\u0233\u0238\u023c\u0240\u0248\u0256\u025a\u0264\u0279\u028d\u0299"+
+		"\u02a0\u02a4\u02a9\u02ab\u02b4\u02b8\u02bb\u02c6\u02cb\u02d1\u02e3\u02e8"+
+		"\u02ea\u02f3\u02f9\u0300\u0304\u030d\u0317\u031a\u031d\u0327\u0333\u0335"+
+		"\u0341\u0345\u0348\u034f\u035d\u035f\u0362\u0365\u0367\u0379\u0383\u0389"+
+		"\u038f\u0397";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

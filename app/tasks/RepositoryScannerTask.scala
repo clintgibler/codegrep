@@ -60,7 +60,7 @@ class RepositoryScannerTask(actorSystem: ActorSystem, repo: SearchDataSource)(im
 
   }
 
-  actorSystem.scheduler.schedule(initialDelay = 1.seconds, interval = 5.minutes) {
+  actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = 5.minutes) {
     repo.getAvailableRepositories foreach {
       case Left(err) => Logger.error("Error retrieving list of repositories: %s".format(err.toString))
       case Right(res) => res.foreach((r) => scan(r.path, r.repository))
