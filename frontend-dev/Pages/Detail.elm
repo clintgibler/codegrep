@@ -14,36 +14,47 @@ type Msg
     = NoOp
     | DataReceived (Result Http.Error Code)
 
-initialModel = {result = Nothing}
+
+initialModel =
+    { result = Nothing }
+
 
 type alias Token =
-    { text: String,
-      line: Int,
-      char: Int,
-      type_: String
+    { text : String
+    , line : Int
+    , char : Int
+    , type_ : String
     }
+
+
 type alias Code =
-    { content: String
-    , filename: String
-    , repository: String
-    , tokens: (List Token)
+    { content : String
+    , filename : String
+    , repository : String
+    , tokens : List Token
     }
+
 
 type alias Model =
-    { result: (Maybe Code) }
+    { result : Maybe Code }
+
 
 port highlight : String -> Cmd msg
+
+
 port highlighted : (String -> msg) -> Sub msg
+
 
 tokenDecoder : Decode.Decoder Token
 tokenDecoder =
-  decode Token
-    |> required "text" Decode.string
-    |> required "line" Decode.int
-    |> required "char" Decode.int
-    |> required "type" Decode.string
+    decode Token
+        |> required "text" Decode.string
+        |> required "line" Decode.int
+        |> required "char" Decode.int
+        |> required "type" Decode.string
 
-decoder: Decode.Decoder Code
+
+decoder : Decode.Decoder Code
 decoder =
     decode Code
         |> required "content" Decode.string
@@ -51,27 +62,41 @@ decoder =
         |> required "repository" Decode.string
         |> required "tokens" (list tokenDecoder)
 
-fetch: Maybe String -> Cmd Msg
+
+fetch : Maybe String -> Cmd Msg
 fetch id =
     case id of
-        Just(v) -> Http.send DataReceived (Http.get("/api/document/" ++ v) decoder)
-        Nothing -> Cmd.none
+        Just v ->
+            Http.send DataReceived (Http.get ("/api/document/" ++ v) decoder)
+
+        Nothing ->
+            Cmd.none
+
 
 view : Model -> Html Msg
-view model  =
-    div[][
-     HeaderView.headerView
-     , case model.result of
-        Just(m) -> div[class "pa4 bg-washed-yellow"]
-                    [ a[href((leftOf ".git" m.repository) ++ "/tree/master/" ++ m.filename)][text m.filename], hr[][], a[href m.repository][text m.repository] ]
-        Nothing -> h1[][text "Loading"]
-     ]
+view model =
+    div []
+        [ HeaderView.headerView
+        , case model.result of
+            Just m ->
+                div [ class "pa4 bg-washed-yellow" ]
+                    [ a [ href ((leftOf ".git" m.repository) ++ "/tree/master/" ++ m.filename) ] [ text m.filename ], hr [] [], a [ href m.repository ] [ text m.repository ] ]
+
+            Nothing ->
+                h1 [] [ text "Loading" ]
+        ]
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp -> (model, Cmd.none)
+        NoOp ->
+            ( model, Cmd.none )
+
         DataReceived result ->
             case result of
-                Ok c -> ({model|result = Just(c)}, highlight c.content)
-                Err err -> (model, highlight (toString err))
+                Ok c ->
+                    ( { model | result = Just (c) }, highlight c.content )
+
+                Err err ->
+                    ( model, highlight (toString err) )

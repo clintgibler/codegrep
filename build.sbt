@@ -21,7 +21,7 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += ws
 libraryDependencies += "org.antlr" % "antlr4" % "4.7.1"
-libraryDependencies += "org.apache.tika" % "tika-core" % "1.18"
+//libraryDependencies += "com.tunnelvisionlabs" % "antlr4" % "4.7.1"
 
 
 // Adds additional packages into Twirl
@@ -29,3 +29,5 @@ libraryDependencies += "org.apache.tika" % "tika-core" % "1.18"
 
 // Adds additional packages into conf/routes
 // play.sbt.routes.RoutesKeys.routesImport += "in.syam.binders._"
+libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.12.6"
+libraryDependencies += "org.scalameta" %% "scalameta" % "3.7.4"

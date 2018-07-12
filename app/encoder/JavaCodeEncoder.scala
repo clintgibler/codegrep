@@ -12,47 +12,51 @@ object JavaCodeEncoder extends CodeEncoder {
     val tokens = new scala.collection.mutable.MutableList[TokenModel]
     val parser = new Java8Parser(new CommonTokenStream(lexer))
 
-    ParseTreeWalker.DEFAULT.walk(new Java8BaseListener() {
-      override def enterPackageDeclaration(ctx: Java8Parser.PackageDeclarationContext): Unit = {
-        tokens += tokenToModel(ctx.packageName.Identifier.getSymbol, "package")
-      }
+    ParseTreeWalker.DEFAULT.walk(
+      new Java8BaseListener() {
+        override def enterPackageDeclaration(ctx: Java8Parser.PackageDeclarationContext): Unit = {
+          tokens += tokenToModel(ctx.packageName.Identifier.getSymbol, "package")
+        }
 
-      override def enterSingleStaticImportDeclaration(ctx: Java8Parser.SingleStaticImportDeclarationContext): Unit = {
-        if (ctx.Identifier() != null)
-          tokens += tokenToModel(ctx.Identifier().getSymbol, "import")
-      }
+        override def enterSingleStaticImportDeclaration(ctx: Java8Parser.SingleStaticImportDeclarationContext): Unit = {
+          if (ctx.Identifier() != null)
+            tokens += tokenToModel(ctx.Identifier().getSymbol, "import")
+        }
 
-      override def enterNormalClassDeclaration(ctx: Java8Parser.NormalClassDeclarationContext): Unit = {
-        if (ctx.Identifier() != null)
-          tokens += tokenToModel(ctx.Identifier().getSymbol, "class")
-      }
+        override def enterNormalClassDeclaration(ctx: Java8Parser.NormalClassDeclarationContext): Unit = {
+          if (ctx.Identifier() != null)
+            tokens += tokenToModel(ctx.Identifier().getSymbol, "class")
+        }
 
-      override def enterVariableDeclaratorId(ctx: Java8Parser.VariableDeclaratorIdContext): Unit = {
-        if (ctx.Identifier() != null)
-          tokens += tokenToModel(ctx.Identifier().getSymbol, "variable")
-      }
+        override def enterVariableDeclaratorId(ctx: Java8Parser.VariableDeclaratorIdContext): Unit = {
+          if (ctx.Identifier() != null)
+            tokens += tokenToModel(ctx.Identifier().getSymbol, "variable")
+        }
 
-      override def enterMethodDeclarator(ctx: Java8Parser.MethodDeclaratorContext): Unit = {
-        if (ctx.Identifier() != null)
-          tokens += tokenToModel(ctx.Identifier().getSymbol, "method")
-      }
+        override def enterMethodDeclarator(ctx: Java8Parser.MethodDeclaratorContext): Unit = {
+          if (ctx.Identifier() != null)
+            tokens += tokenToModel(ctx.Identifier().getSymbol, "method")
+        }
 
-      override def enterEnumDeclaration(ctx: Java8Parser.EnumDeclarationContext): Unit = {
-        if (ctx.Identifier() != null)
-          tokens += tokenToModel(ctx.Identifier().getSymbol, "enum")
-      }
+        override def enterEnumDeclaration(ctx: Java8Parser.EnumDeclarationContext): Unit = {
+          if (ctx.Identifier() != null)
+            tokens += tokenToModel(ctx.Identifier().getSymbol, "enum")
+        }
 
-      override def enterNormalInterfaceDeclaration(ctx: Java8Parser.NormalInterfaceDeclarationContext): Unit = {
-        if (ctx.Identifier() != null)
-          tokens += tokenToModel(ctx.Identifier().getSymbol, "interface")
-      }
+        override def enterNormalInterfaceDeclaration(ctx: Java8Parser.NormalInterfaceDeclarationContext): Unit = {
+          if (ctx.Identifier() != null)
+            tokens += tokenToModel(ctx.Identifier().getSymbol, "interface")
+        }
 
-      override def enterAnnotationTypeElementDeclaration(ctx: Java8Parser.AnnotationTypeElementDeclarationContext): Unit = {
-        if (ctx.Identifier() != null)
-          tokens += tokenToModel(ctx.Identifier().getSymbol, "annotation")
-      }
+        override def enterAnnotationTypeElementDeclaration(
+            ctx: Java8Parser.AnnotationTypeElementDeclarationContext): Unit = {
+          if (ctx.Identifier() != null)
+            tokens += tokenToModel(ctx.Identifier().getSymbol, "annotation")
+        }
 
-    }, parser.compilationUnit)
+      },
+      parser.compilationUnit
+    )
 
     tokens.toList
   }

@@ -1,3 +1,5 @@
+import java.util.concurrent.{ArrayBlockingQueue, ThreadPoolExecutor, TimeUnit}
+
 import akka.actor.ActorSystem
 import akka.dispatch.MessageDispatcher
 import components.ElasticsearchComponents
@@ -10,16 +12,14 @@ import tasks.RepositoryScannerTask
 
 import scala.concurrent.ExecutionContext
 
-
 class AppLoader extends ApplicationLoader {
   override def load(context: Context): Application = {
     new AppComponents(context).application
   }
 }
 
-
 class AppComponents(context: Context)
-  extends BuiltInComponentsFromContext(context)
+    extends BuiltInComponentsFromContext(context)
     with ElasticsearchComponents
     with AssetsComponents
     with HttpFiltersComponents {
@@ -29,7 +29,13 @@ class AppComponents(context: Context)
   lazy val documentController = new DocumentController(controllerComponents, documentsRepository)
   lazy val indexController = new IndexController(controllerComponents, documentsRepository, configuration)
   lazy val repositoryController = new RepositoryController(controllerComponents, documentsRepository)
-  lazy val router = new Routes(httpErrorHandler, assets, versionController, searchController, documentController, indexController, repositoryController)
+  lazy val router = new Routes(httpErrorHandler,
+                               assets,
+                               versionController,
+                               searchController,
+                               documentController,
+                               indexController,
+                               repositoryController)
 
   if (configuration.get[Boolean]("node.crawler")) {
     Logger.info("Starting crawler")

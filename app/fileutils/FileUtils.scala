@@ -9,8 +9,7 @@ object FileUtils {
   def listFiles(directory: String): Option[java.util.stream.Stream[Path]] = {
     try {
       Some(Files.walk(Paths.get(directory)).filter((path) => Files.isRegularFile(path)))
-    }
-    catch {
+    } catch {
       case e: IOException =>
         Logger.info("Encountered an error while walking the directory: %s".format(directory) + e.printStackTrace())
         None

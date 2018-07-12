@@ -30,7 +30,7 @@ class JavaCodeEncoderSpec extends PlaySpec {
   }
 
   "JavaCodeEncoder" must {
-    "must parse classes correctly " in {
+    "must parse Java classes correctly " in {
       val code = CodeSourceModel(
         id = "abc",
         repository = "https://github.com/x.git",
@@ -49,7 +49,7 @@ class JavaCodeEncoderSpec extends PlaySpec {
     }
   }
 
-  "must parse interfaces correctly " in {
+  "must parse Java interfaces correctly " in {
     val code = CodeSourceModel(
       id = "abc",
       repository = "https://github.com/x.git",
