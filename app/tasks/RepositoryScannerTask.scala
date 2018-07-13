@@ -13,13 +13,15 @@ import play.api.Logger
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 object RepositoryScannerTask {
   // TODO: Get rid of this and use akka streams or something for backpressure, aka to throttle zillion futures
   private val sem = new Semaphore(10)
 }
 
-class RepositoryScannerTask(actorSystem: ActorSystem, repo: SearchDataSource)(implicit ec: ExecutionContext) {
+class RepositoryScannerTask(actorSystem: ActorSystem, repo: SearchDataSource, crawlerThreads: ExecutionContext)(implicit ec: ExecutionContext) {
+
 
   def scan(directory: String, repository: String): Unit = {
 
@@ -47,7 +49,6 @@ class RepositoryScannerTask(actorSystem: ActorSystem, repo: SearchDataSource)(im
                            repository: String,
                            content: String,
                            contentChecksum: String): Future[Either[SearchDataSourceError, Unit]] = {
-
       // TODO: Better expressed as for comprehension I guess
       isUpdated(id, contentChecksum) flatMap { (res) =>
         {
@@ -91,25 +92,41 @@ class RepositoryScannerTask(actorSystem: ActorSystem, repo: SearchDataSource)(im
           .filter(!_.toString.contains(".git/"))
           .filter(Files.size(_) < 1024 * 1024) // Limit to 1MB
           .forEach((path) => {
+          Logger.debug("Producer executing in thread: %s".format(Thread.currentThread().getName))
+          try {
             RepositoryScannerTask.sem.acquireUninterruptibly()
-            Logger.debug(
-              "Processing path: %s - Remaining permits: %d".format(path, RepositoryScannerTask.sem.availablePermits()))
-            processFile(directory, path, repository) foreach {
-              case Left(failure) =>
-                Logger.debug(failure)
-                RepositoryScannerTask.sem.release()
-              case Right(_) =>
-                Logger.debug("Finished file: %s".format(path))
+            Logger.debug("Processing path: %s - Remaining permits: %d".format(path, RepositoryScannerTask.sem.availablePermits()))
+            processFile(directory, path, repository) onComplete {
+              case Success(s) =>
+                s match {
+                  case Left(failure) =>
+                    Logger.debug("Consumer executing in thread: %s".format(Thread.currentThread().getName))
+                    Logger.debug(failure)
+                    RepositoryScannerTask.sem.release()
+                  case Right(_) =>
+                    Logger.debug("Consumer executing in thread: %s".format(Thread.currentThread().getName))
+                    Logger.debug("Finished file: %s".format(path))
+                    RepositoryScannerTask.sem.release()
+                }
+              case Failure(f) =>
+                Logger.error("Uh oh failure to complete future: %s".format(f.getMessage))
                 RepositoryScannerTask.sem.release()
             }
+          } catch {
+            case e: Exception =>
+              Logger.error("Uh oh an exception occured: %s".format(e.getMessage))
+              RepositoryScannerTask.sem.release()
+          }
           })
       case _ =>
     }
 
   }
 
-  actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = 5.minutes) {
-    repo.getAvailableRepositories(ec) foreach {
+  // TODO: make scheduler configurable
+  actorSystem.scheduler.schedule(initialDelay = 5.seconds, interval = 30.minutes) {
+    implicit val ec = crawlerThreads
+    repo.getAvailableRepositories foreach {
       case Left(err)  => Logger.error("Error retrieving list of repositories: %s".format(err.toString))
       case Right(res) => res.foreach((r) => scan(r.path, r.repository))
     }

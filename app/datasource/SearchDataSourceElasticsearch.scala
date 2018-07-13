@@ -5,10 +5,11 @@ import com.sksamuel.elastic4s.http.search.SearchHit
 import com.sksamuel.elastic4s.searches.queries.QueryDefinition
 import encoder.CodeEncoder
 import models._
+import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class SearchDataSourceElasticsearch(client: HttpClient) extends SearchDataSource {
+class SearchDataSourceElasticsearch(client: HttpClient)(implicit ec: ExecutionContext) extends SearchDataSource {
 
   // TODO(syam): Get these from elasticsearch
   override def getAvailableLanguages: Either[SearchDataSourceError, Seq[String]] = {
@@ -33,8 +34,7 @@ class SearchDataSourceElasticsearch(client: HttpClient) extends SearchDataSource
     }
   }
 
-  override def getDocumentById(id: String)(
-      implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, String]] = {
+  override def getDocumentById(id: String): Future[Either[SearchDataSourceError, String]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
     client
       .execute {
@@ -49,8 +49,7 @@ class SearchDataSourceElasticsearch(client: HttpClient) extends SearchDataSource
       }
   }
 
-  override def getChecksumById(id: String)(
-      implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, String]] = {
+  override def getChecksumById(id: String): Future[Either[SearchDataSourceError, String]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
     client
       .execute {
@@ -64,22 +63,24 @@ class SearchDataSourceElasticsearch(client: HttpClient) extends SearchDataSource
       }
   }
 
-  override def getDocumentByTerm(queryString: Map[String, Seq[String]])(
-      implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, Seq[SearchResultModel]]] = {
-    def hitToSearchDocumentModel(hit: SearchHit): SearchResultModel = {
-      // Hate nulls
-      val highlight = if (hit.highlight != null && hit.highlight.contains("content")) {
+  override def getDocumentByTerm(queryString: Map[String, Seq[String]]): Future[Either[SearchDataSourceError, Seq[SearchResultModel]]] = {
+
+    def makeHighlight(hit: SearchHit, highlightTerm: String): String = {
+      if (hit.highlight != null && hit.highlight.contains("content")) {
         hit.highlight("content").mkString
       } else {
+        Logger.debug(hit.sourceField("tokens").toString)
         hit.sourceField("content").toString.slice(0, 600)
       }
+    }
 
+    def hitToSearchDocumentModel(hit: SearchHit, highlightTerm: String): SearchResultModel = {
       SearchResultModel(
         id = hit.id,
         filename = hit.sourceField("filename").toString,
         repository = hit.sourceField("repository").toString,
         content = hit.sourceField("content").toString,
-        highlight = highlight
+        highlight = makeHighlight(hit, highlightTerm)
       )
     }
 
@@ -88,6 +89,7 @@ class SearchDataSourceElasticsearch(client: HttpClient) extends SearchDataSource
     var queries: List[QueryDefinition] = List()
     var nestedQueries: List[QueryDefinition] = List()
     var nested = nestedQuery("tokens")
+    var highlightTerm = "content"
 
     queryString.foreach {
       case (k, v) =>
@@ -108,6 +110,7 @@ class SearchDataSourceElasticsearch(client: HttpClient) extends SearchDataSource
           case "tokens.text" =>
             nestedQueries = termQuery(k, v.mkString) :: nestedQueries
           case "tokens.type" =>
+            highlightTerm = v.mkString
             nestedQueries = termQuery(k, v.mkString) :: nestedQueries
           case _ =>
         }
@@ -120,12 +123,11 @@ class SearchDataSourceElasticsearch(client: HttpClient) extends SearchDataSource
       }
       .map {
         case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
-        case Right(data)   => Right(data.result.hits.hits.map((hit) => hitToSearchDocumentModel(hit)))
+        case Right(data)   => Right(data.result.hits.hits.map((hit) => hitToSearchDocumentModel(hit, highlightTerm)))
       }
   }
 
-  override def updateChecksumById(id: String, checksum: String)(
-      implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, Unit]] = {
+  override def updateChecksumById(id: String, checksum: String): Future[Either[SearchDataSourceError, Unit]] = {
     import com.sksamuel.elastic4s.http.ElasticDsl._
     import io.circe.Json
     val json = Json.obj(("checksum", Json.fromString(checksum)))
@@ -135,8 +137,7 @@ class SearchDataSourceElasticsearch(client: HttpClient) extends SearchDataSource
     }
   }
 
-  override def indexCode(source: CodeSourceModel)(
-      implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, Unit]] = {
+  override def indexCode(source: CodeSourceModel): Future[Either[SearchDataSourceError, Unit]] = {
     CodeEncoder.from(source) match {
       case Left(failure) =>
         Future {
@@ -152,8 +153,7 @@ class SearchDataSourceElasticsearch(client: HttpClient) extends SearchDataSource
   }
 
   // TODO(syam): Convert this to scroll based API
-  override def getAvailableRepositories(
-      implicit ec: ExecutionContext): Future[Either[SearchDataSourceError, Seq[RepositoryModel]]] = {
+  override def getAvailableRepositories: Future[Either[SearchDataSourceError, Seq[RepositoryModel]]] = {
 
     def hitToSearchRepositoryModel(hit: SearchHit): RepositoryModel = {
       RepositoryModel(repository = hit.sourceField("repository").toString, path = hit.sourceField("path").toString)

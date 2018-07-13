@@ -1,16 +1,19 @@
-import java.util.concurrent.{ArrayBlockingQueue, ThreadPoolExecutor, TimeUnit}
+import java.util.concurrent.{ArrayBlockingQueue, ThreadFactory, ThreadPoolExecutor, TimeUnit}
 
 import akka.actor.ActorSystem
 import akka.dispatch.MessageDispatcher
-import components.ElasticsearchComponents
+import com.sksamuel.elastic4s.ElasticsearchClientUri
+import com.sksamuel.elastic4s.http.HttpClient
 import controllers._
+import datasource.{SearchDataSource, SearchDataSourceElasticsearch}
 import play.api.ApplicationLoader.Context
 import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext, Logger}
 import play.filters.HttpFiltersComponents
 import router.Routes
 import tasks.RepositoryScannerTask
+import java.util.concurrent.atomic.AtomicInteger
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class AppLoader extends ApplicationLoader {
   override def load(context: Context): Application = {
@@ -20,9 +23,21 @@ class AppLoader extends ApplicationLoader {
 
 class AppComponents(context: Context)
     extends BuiltInComponentsFromContext(context)
-    with ElasticsearchComponents
     with AssetsComponents
     with HttpFiltersComponents {
+
+  implicit val ec: ExecutionContext = actorSystem.dispatchers.defaultGlobalDispatcher
+
+  lazy private val essClient: HttpClient = {
+    val essClient = HttpClient(ElasticsearchClientUri("localhost", 9200))
+    // Shutdown the client when the app is stopped or reloaded
+    applicationLifecycle.addStopHook(() => Future.successful(essClient.close()))
+    essClient
+  }
+
+  lazy val documentsRepository: SearchDataSource = {
+    new SearchDataSourceElasticsearch(essClient)(ec)
+  }
 
   lazy val versionController = new VersionController(controllerComponents)
   lazy val searchController = new SearchController(controllerComponents, documentsRepository)
@@ -39,10 +54,28 @@ class AppComponents(context: Context)
 
   if (configuration.get[Boolean]("node.crawler")) {
     Logger.info("Starting crawler")
-    // Repository scanner uses internal indexer methods and hence we pass it indexer pool
+    /*
     // TODO: change the crawler to use HTTP api
-    val ec: ExecutionContext = actorSystem.dispatchers.lookup("indexer.thread-pool")
-    new RepositoryScannerTask(actorSystem, documentsRepository)(ec)
+    val crawlerThreads = new ThreadPoolExecutor(1,
+                                                1,
+                                                0L,
+                                                TimeUnit.MILLISECONDS,
+                                                new ArrayBlockingQueue[Runnable](20),
+                                                new ThreadPoolExecutor.AbortPolicy())
+    crawlerThreads.setThreadFactory(new ThreadFactory {
+      private val counter = new AtomicInteger(0)
+      override def newThread(r: Runnable): Thread = {
+        val t = new Thread(r)
+        t.setDaemon(true)
+        t.setName("crawler-thread-%d".format(counter.incrementAndGet()))
+        t
+      }
+    })
+
+    val crawlerEc = ExecutionContext.fromExecutor(crawlerThreads)
+    */
+    val crawlerEc = actorSystem.dispatchers.lookup("crawler.thread-pool")
+    new RepositoryScannerTask(actorSystem, documentsRepository, crawlerEc)(ec)
   }
 
 }
