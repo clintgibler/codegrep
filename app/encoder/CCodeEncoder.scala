@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets
 
 import encoder.CPPCodeEncoder.{getTerminalNodeByXPath, tokenToModel}
 import models.TokenModel
-import org.antlr.v4.runtime.atn.{ParserATNSimulator, PredictionContextCache}
+import org.antlr.v4.runtime.atn.{LexerATNSimulator, ParserATNSimulator, PredictionContextCache}
 import org.antlr.v4.runtime.tree._
 import org.antlr.v4.runtime._
 import parsers.cpp._
@@ -16,6 +16,8 @@ object CCodeEncoder extends CodeEncoder {
   def extractTokens(lexer: CPP14Lexer): List[TokenModel] = {
     val tokens = new collection.mutable.MutableList[TokenModel]
     val parser = new CPP14Parser(new CommonTokenStream(lexer))
+    parser.setInterpreter(
+      new ParserATNSimulator(parser, parser.getATN, parser.getInterpreter.decisionToDFA, new PredictionContextCache))
     ParseTreeWalker.DEFAULT.walk(
       new CPP14BaseListener() {
 
@@ -38,6 +40,8 @@ object CCodeEncoder extends CodeEncoder {
   override def parse(content: String): List[TokenModel] = {
     val stream = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))
     val lexer = new CPP14Lexer(CharStreams.fromStream(stream, StandardCharsets.UTF_8))
+    lexer.setInterpreter(
+      new LexerATNSimulator(lexer, lexer.getATN, lexer.getInterpreter.decisionToDFA, new PredictionContextCache))
     extractTokens(lexer)
   }
 }

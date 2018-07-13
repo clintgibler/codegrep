@@ -11,6 +11,8 @@ object JavaCodeEncoder extends CodeEncoder {
   def extractTokens(lexer: Java8Lexer): List[TokenModel] = {
     val tokens = new scala.collection.mutable.MutableList[TokenModel]
     val parser = new Java8Parser(new CommonTokenStream(lexer))
+    parser.setInterpreter(
+      new ParserATNSimulator(parser, parser.getATN, parser.getInterpreter.decisionToDFA, new PredictionContextCache))
 
     ParseTreeWalker.DEFAULT.walk(
       new Java8BaseListener() {
@@ -63,6 +65,8 @@ object JavaCodeEncoder extends CodeEncoder {
 
   override def parse(content: String): List[TokenModel] = {
     val lexer = new Java8Lexer(new ANTLRInputStream(content))
+    lexer.setInterpreter(
+      new LexerATNSimulator(lexer, lexer.getATN, lexer.getInterpreter.decisionToDFA, new PredictionContextCache))
     extractTokens(lexer)
   }
 

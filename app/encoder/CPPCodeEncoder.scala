@@ -2,7 +2,7 @@ package encoder
 
 import models.TokenModel
 import org.antlr.v4.runtime._
-import org.antlr.v4.runtime.atn.{ParserATNSimulator, PredictionContextCache}
+import org.antlr.v4.runtime.atn.{LexerATNSimulator, ParserATNSimulator, PredictionContextCache}
 import org.antlr.v4.runtime.tree._
 import parsers.cpp._
 import play.api.Logger
@@ -42,9 +42,6 @@ object CPPCodeEncoder extends CodeEncoder {
 
   override def parse(content: String): List[TokenModel] = {
     val lexer = new CPP14Lexer(new ANTLRInputStream(content))
-    import org.antlr.v4.runtime.atn.LexerATNSimulator
-    import org.antlr.v4.runtime.atn.ParserATNSimulator
-    import org.antlr.v4.runtime.atn.PredictionContextCache
     lexer.setInterpreter(
       new LexerATNSimulator(lexer, lexer.getATN, lexer.getInterpreter.decisionToDFA, new PredictionContextCache))
     extractTokens(lexer)
