@@ -1,0 +1,22 @@
+#!/bin/bash
+
+pushd $PWD
+dir=$PWD/clang-build
+mkdir $dir
+cd $dir
+
+echo "Checking out llvm"
+svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm
+
+echo "Checking out clang"
+cd llvm/tools
+svn co http://llvm.org/svn/llvm-project/cfe/trunk clang
+cd ../..
+
+mkdir build
+cd build
+cmake -G "Unix Makefiles" ../llvm
+make -j8
+
+popd
+$dir/bin/clang util/clang-dump.c -o util/clang-dump -L$dir/build/lib -lclang -I$dir/llvm/tools/clang/include -Wl,-rpath,$dir/build/lib
