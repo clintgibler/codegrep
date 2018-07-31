@@ -7,7 +7,7 @@ import play.api.Logger
 
 
 object ClangCodeEncoder {
-  val clangDumpExec = "clang-dump"
+  val clangDumpExec = "tools/bin/clang-dump"
 
   def getToken(line: String) : Option[TokenModel] = {
     val parts = line.split(",")
@@ -32,6 +32,7 @@ object ClangCodeEncoder {
         case None =>
       }
     )
+    f.delete()
     tokens.toList
   }
 }
