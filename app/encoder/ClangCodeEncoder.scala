@@ -7,7 +7,7 @@ import play.api.Logger
 
 
 object ClangCodeEncoder {
-  val clangDumpExec = "util/clang-dump"
+  val clangDumpExec = "clang-dump"
 
   def getToken(line: String) : Option[TokenModel] = {
     val parts = line.split(",")

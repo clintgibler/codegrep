@@ -38,9 +38,9 @@ class CCodeEncoderSpec extends PlaySpec {
       val r = encoder match {
         case Left(failure) => fail(failure.toString)
         case Right(model) =>
-          extractToken(model, "VarDecl", "a") mustBe "a"
-          extractToken(model, "FunctionDecl", "main") mustBe "main"
-          extractToken(model, "FunctionDecl", "mlx4_stop_sense") mustBe "mlx4_stop_sense"
+          extractToken(model, "variable", "a") mustBe "a"
+          extractToken(model, "function", "main") mustBe "main"
+          extractToken(model, "function", "mlx4_stop_sense") mustBe "mlx4_stop_sense"
       }
     }
   }
