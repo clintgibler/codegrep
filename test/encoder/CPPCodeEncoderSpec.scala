@@ -80,9 +80,9 @@ class CPPCodeEncoderSpec extends PlaySpec {
       val r = encoder match {
         case Left(failure) => fail(failure.toString)
         case Right(model) =>
-          extractToken(model, "function", "add") mustBe "add"
-          extractToken(model, "function", "bar1") mustBe "bar1"
-          extractToken(model, "class", "Foo") mustBe "Foo"
+          extractToken(model, "CXXMethod", "add") mustBe "add"
+          extractToken(model, "FunctionDecl", "bar1") mustBe "bar1"
+          extractToken(model, "ClassDecl", "Foo") mustBe "Foo"
       }
     }
     "must parse C++ namespaces correctly " in {
@@ -96,8 +96,8 @@ class CPPCodeEncoderSpec extends PlaySpec {
       val r = encoder match {
         case Left(failure) => fail(failure.toString)
         case Right(model) =>
-          extractToken(model, "namespace", "ContosoData") mustBe "ContosoData"
-          extractToken(model, "namespace", "ObjectManager") mustBe "Token not found"
+          extractToken(model, "Namespace", "ContosoData") mustBe "ContosoData"
+          extractToken(model, "Namespace", "ObjectManager") mustBe "Token not found"
       }
     }
   }

@@ -51,7 +51,7 @@ object CodeEncoder {
                               source.repository,
                               source.content,
                               "c",
-                              CCodeEncoder.parse(source.content)))
+                              ClangCodeEncoder.parse(source.content, "." + fileType)))
             case "cpp" | "hpp" =>
               Right(
                 new CodeModel(source.id,
@@ -59,7 +59,7 @@ object CodeEncoder {
                               source.repository,
                               source.content,
                               "cpp",
-                              CPPCodeEncoder.parse(source.content)))
+                              ClangCodeEncoder.parse(source.content, "." + fileType)))
 
             case "java" =>
               Right(

@@ -4,6 +4,7 @@ import java.io.{FileNotFoundException, IOException}
 import java.nio.file.{Files, Path, Paths}
 
 import play.api.Logger
+import java.io.{ File, PrintWriter }
 
 object FileUtils {
   def listFiles(directory: String): Option[java.util.stream.Stream[Path]] = {
@@ -26,6 +27,20 @@ object FileUtils {
       case e: IOException =>
         None
     }
+  }
+
+
+  def tmpFile(contents: String, suffix: String): File = {
+    val f = File.createTempFile("codegrep-", suffix)
+    f.deleteOnExit()
+    new PrintWriter(f) {
+      try {
+        write(contents)
+      } finally {
+        close()
+      }
+    }
+    f
   }
 
 }

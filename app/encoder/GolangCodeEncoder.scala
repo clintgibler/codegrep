@@ -10,8 +10,8 @@ object GolangCodeEncoder extends CodeEncoder {
   def extractTokens(lexer: GolangLexer): List[TokenModel] = {
     val tokens = new collection.mutable.MutableList[TokenModel]
     val parser = new GolangParser(new CommonTokenStream(lexer))
-    parser.setInterpreter(
-      new ParserATNSimulator(parser, parser.getATN, parser.getInterpreter.decisionToDFA, new PredictionContextCache))
+    //parser.setInterpreter(
+     // new ParserATNSimulator(parser, parser.getATN, parser.getInterpreter.decisionToDFA, new PredictionContextCache))
 
     ParseTreeWalker.DEFAULT.walk(
       new GolangBaseListener() {
@@ -59,8 +59,8 @@ object GolangCodeEncoder extends CodeEncoder {
 
   override def parse(content: String): List[TokenModel] = {
     val lexer = new GolangLexer(new ANTLRInputStream(content))
-    lexer.setInterpreter(
-      new LexerATNSimulator(lexer, lexer.getATN, lexer.getInterpreter.decisionToDFA, new PredictionContextCache))
+    //lexer.setInterpreter(
+     // new LexerATNSimulator(lexer, lexer.getATN, lexer.getInterpreter.decisionToDFA, new PredictionContextCache))
     extractTokens(lexer)
   }
 }

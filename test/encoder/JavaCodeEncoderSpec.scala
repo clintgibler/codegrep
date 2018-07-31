@@ -6,7 +6,7 @@ import org.scalatestplus.play._
 class JavaCodeEncoderSpec extends PlaySpec {
   val validJavaClass =
     """package test;
-      import java.util.something;
+      import abc.util.something;
       class App {
         enum Color { RED, GREEN, BLUE; }
         public static void main(String args[]) {
