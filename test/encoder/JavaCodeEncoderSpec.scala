@@ -44,7 +44,6 @@ class JavaCodeEncoderSpec extends PlaySpec {
           extractToken(model, "class", "App") mustBe "App"
           extractToken(model, "variable", "i") mustBe "i"
           extractToken(model, "method", "main") mustBe "main"
-          extractToken(model, "enum", "Color") mustBe "Color"
       }
     }
   }

@@ -1,73 +1,44 @@
 package encoder
 
 import models.TokenModel
-import org.antlr.v4.runtime.atn.{LexerATNSimulator, ParserATNSimulator, PredictionContextCache}
-import org.antlr.v4.runtime.tree.ParseTreeWalker
-import org.antlr.v4.runtime.tree.TerminalNode
-import org.antlr.v4.runtime.{ANTLRInputStream, CommonTokenStream, Token}
-import parsers.java8._
+import org.eclipse.jdt.core.dom._
 
 object JavaCodeEncoder extends CodeEncoder {
-  def extractTokens(lexer: Java8Lexer): List[TokenModel] = {
-    val tokens = new scala.collection.mutable.MutableList[TokenModel]
-    val parser = new Java8Parser(new CommonTokenStream(lexer))
-    parser.setInterpreter(
-      new ParserATNSimulator(parser, parser.getATN, parser.getInterpreter.decisionToDFA, new PredictionContextCache))
+  override def parse(content: String): List[TokenModel] = {
+    val tokens = new collection.mutable.MutableList[TokenModel]
+    val parser = ASTParser.newParser(AST.JLS10)
+    parser.setSource(content.toCharArray)
+    parser.setKind(ASTParser.K_COMPILATION_UNIT)
+    val cu: CompilationUnit = parser.createAST(null).asInstanceOf[CompilationUnit]
 
-    ParseTreeWalker.DEFAULT.walk(
-      new Java8BaseListener() {
-        override def enterPackageDeclaration(ctx: Java8Parser.PackageDeclarationContext): Unit = {
-          tokens += tokenToModel(ctx.packageName.Identifier.getSymbol, "package")
+    def toTokenModel(node: SimpleName, tokenType: String): TokenModel = {
+      TokenModel(
+        text = node.getIdentifier,
+        line = cu.getLineNumber(node.getStartPosition),
+        char = cu.getColumnNumber(node.getStartPosition) + 1,
+        tokenType = tokenType
+      )
+    }
+
+    cu.accept(new ASTVisitor() {
+      override def visit(node: MethodDeclaration): Boolean = {
+        tokens += toTokenModel(node.getName, "method")
+        true
+      }
+      override def visit(node: VariableDeclarationFragment): Boolean = {
+        tokens += toTokenModel(node.getName, "variable")
+        true
+      }
+      override def visit(node: TypeDeclaration): Boolean = {
+        if (node.isInterface) {
+          tokens += toTokenModel(node.getName, "interface")
+        } else {
+          tokens += toTokenModel(node.getName, "class")
         }
+        true
+      }
 
-        override def enterSingleStaticImportDeclaration(ctx: Java8Parser.SingleStaticImportDeclarationContext): Unit = {
-          if (ctx.Identifier() != null)
-            tokens += tokenToModel(ctx.Identifier().getSymbol, "import")
-        }
-
-        override def enterNormalClassDeclaration(ctx: Java8Parser.NormalClassDeclarationContext): Unit = {
-          if (ctx.Identifier() != null)
-            tokens += tokenToModel(ctx.Identifier().getSymbol, "class")
-        }
-
-        override def enterVariableDeclaratorId(ctx: Java8Parser.VariableDeclaratorIdContext): Unit = {
-          if (ctx.Identifier() != null)
-            tokens += tokenToModel(ctx.Identifier().getSymbol, "variable")
-        }
-
-        override def enterMethodDeclarator(ctx: Java8Parser.MethodDeclaratorContext): Unit = {
-          if (ctx.Identifier() != null)
-            tokens += tokenToModel(ctx.Identifier().getSymbol, "method")
-        }
-
-        override def enterEnumDeclaration(ctx: Java8Parser.EnumDeclarationContext): Unit = {
-          if (ctx.Identifier() != null)
-            tokens += tokenToModel(ctx.Identifier().getSymbol, "enum")
-        }
-
-        override def enterNormalInterfaceDeclaration(ctx: Java8Parser.NormalInterfaceDeclarationContext): Unit = {
-          if (ctx.Identifier() != null)
-            tokens += tokenToModel(ctx.Identifier().getSymbol, "interface")
-        }
-
-        override def enterAnnotationTypeElementDeclaration(
-            ctx: Java8Parser.AnnotationTypeElementDeclarationContext): Unit = {
-          if (ctx.Identifier() != null)
-            tokens += tokenToModel(ctx.Identifier().getSymbol, "annotation")
-        }
-
-      },
-      parser.compilationUnit
-    )
-
+    })
     tokens.toList
   }
-
-  override def parse(content: String): List[TokenModel] = {
-    val lexer = new Java8Lexer(new ANTLRInputStream(content))
-    lexer.setInterpreter(
-      new LexerATNSimulator(lexer, lexer.getATN, lexer.getInterpreter.decisionToDFA, new PredictionContextCache))
-    extractTokens(lexer)
-  }
-
 }

@@ -23,7 +23,7 @@ class SearchDataSourceElasticsearch(client: HttpClient)(implicit ec: ExecutionCo
     val cpp = "class" :: "namespace" :: "variable" :: "function" :: default
     val scala = "class" :: "object" :: "trait" :: "variable" :: default
     val go = "variable" :: "type" :: "function" :: "method" :: default
-    val java = "variable" :: "package" :: "import" :: "class" :: "variable" :: "method" :: "enum" :: "interface" :: "annotation" :: default
+    val java = "variable" :: "class" :: "method" :: "interface" :: default
     language match {
       case "c"     => Right(c)
       case "cpp"   => Right(cpp)

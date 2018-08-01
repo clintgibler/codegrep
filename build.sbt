@@ -21,15 +21,12 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += ws
 libraryDependencies += "org.antlr" % "antlr4" % "4.7.1"
-//libraryDependencies += "com.tunnelvisionlabs" % "antlr4" % "4.7.1"
-
-
-// Adds additional packages into Twirl
-//TwirlKeys.templateImports += "in.syam.controllers._"
-
-// Adds additional packages into conf/routes
-// play.sbt.routes.RoutesKeys.routesImport += "in.syam.binders._"
 libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.12.6"
+
+libraryDependencies += "org.eclipse.platform" % "org.eclipse.equinox.app" % "1.3.500"
+libraryDependencies += "org.eclipse.jdt" % "org.eclipse.jdt.core" % "3.14.0"
+
+
+
 libraryDependencies += "org.scalameta" %% "scalameta" % "3.7.4"
-libraryDependencies += "net.java.dev.jna" % "jna" % "4.5.2"
-libraryDependencies += "net.java.dev.jna" % "jna-platform" % "4.5.2"
+
