@@ -15,7 +15,6 @@ frontend-dev/node_modules
 gradle
 gradlew
 target/
-dist/
 tools/
 .vscode
 *.swp
