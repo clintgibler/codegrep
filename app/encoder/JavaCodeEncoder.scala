@@ -3,8 +3,9 @@ package encoder
 import models.TokenModel
 import org.eclipse.jdt.core.dom._
 
-object JavaCodeEncoder extends CodeEncoder {
-  override def parse(content: String): List[TokenModel] = {
+object JavaCodeEncoder {
+
+  def parse(content: String): List[TokenModel] = {
     val tokens = new collection.mutable.MutableList[TokenModel]
     val parser = ASTParser.newParser(AST.JLS10)
     parser.setSource(content.toCharArray)

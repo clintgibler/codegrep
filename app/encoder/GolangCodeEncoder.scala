@@ -5,27 +5,13 @@ import models.TokenModel
 import scala.sys.process.Process
 
 object GolangCodeEncoder {
-    val clangDumpExec = "tools/bin/golang-dump"
-
-    def getToken(line: String) : Option[TokenModel] = {
-      val parts = line.split(",")
-      if (parts.length != 3) {
-        None
-      }
-      try {
-        Some(TokenModel(parts(0), parts(2).toInt, parts(3).toInt, parts(1)))
-      } catch {
-        case _ :java.lang.NumberFormatException => None
-        case e: Exception => throw e
-      }
-    }
-
+    val golangDumpExec = "tools/bin/golang-dump"
     def parse(content: String, extension: String): List[TokenModel] = {
       val tokens = new collection.mutable.MutableList[TokenModel]
       val f = FileUtils.tmpFile(content, extension)
-      val cmd = clangDumpExec :: f.getAbsolutePath :: Nil
+      val cmd = golangDumpExec :: f.getAbsolutePath :: Nil
       Process(cmd).lineStream.foreach((l) =>
-        getToken(l) match {
+        TokenModel.fromCsv(l) match {
           case Some(token) => tokens += token
           case None =>
         }

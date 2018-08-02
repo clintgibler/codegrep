@@ -4,9 +4,9 @@ import models.TokenModel
 import play.api.Logger
 import scala.meta._
 
-object ScalaCodeEncoder extends CodeEncoder {
+object ScalaCodeEncoder {
 
-  override def parse(content: String): List[TokenModel] = {
+  def parse(content: String): List[TokenModel] = {
     var l: List[TokenModel] = List.empty
     content.parse[Source].get.traverse {
       case v: Defn.Class =>
