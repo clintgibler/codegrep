@@ -1,66 +1,36 @@
 package encoder
 
+import fileutils.FileUtils
 import models.TokenModel
-import org.antlr.v4.runtime.atn.{LexerATNSimulator, ParserATNSimulator, PredictionContextCache}
-import org.antlr.v4.runtime.tree.ParseTreeWalker
-import org.antlr.v4.runtime.{ANTLRInputStream, CommonTokenStream, Token}
-import parsers.golang._
+import scala.sys.process.Process
 
-object GolangCodeEncoder extends CodeEncoder {
-  def extractTokens(lexer: GolangLexer): List[TokenModel] = {
-    val tokens = new collection.mutable.MutableList[TokenModel]
-    val parser = new GolangParser(new CommonTokenStream(lexer))
-    //parser.setInterpreter(
-     // new ParserATNSimulator(parser, parser.getATN, parser.getInterpreter.decisionToDFA, new PredictionContextCache))
+object GolangCodeEncoder {
+    val clangDumpExec = "tools/bin/golang-dump"
 
-    ParseTreeWalker.DEFAULT.walk(
-      new GolangBaseListener() {
-        override def enterImportDecl(ctx: GolangParser.ImportDeclContext): Unit = {}
+    def getToken(line: String) : Option[TokenModel] = {
+      val parts = line.split(",")
+      if (parts.length != 3) {
+        None
+      }
+      try {
+        Some(TokenModel(parts(0), parts(2).toInt, parts(3).toInt, parts(1)))
+      } catch {
+        case _ :java.lang.NumberFormatException => None
+        case e: Exception => throw e
+      }
+    }
 
-        override def enterTypeSpec(ctx: GolangParser.TypeSpecContext): Unit = {
-          if (ctx.IDENTIFIER() != null)
-            tokens += tokenToModel(ctx.IDENTIFIER().getSymbol, "type")
+    def parse(content: String, extension: String): List[TokenModel] = {
+      val tokens = new collection.mutable.MutableList[TokenModel]
+      val f = FileUtils.tmpFile(content, extension)
+      val cmd = clangDumpExec :: f.getAbsolutePath :: Nil
+      Process(cmd).lineStream.foreach((l) =>
+        getToken(l) match {
+          case Some(token) => tokens += token
+          case None =>
         }
-
-        override def enterFunctionDecl(ctx: GolangParser.FunctionDeclContext): Unit = {
-          if (ctx.IDENTIFIER() != null)
-            tokens += tokenToModel(ctx.IDENTIFIER().getSymbol, "function")
-        }
-
-        override def enterMethodDecl(ctx: GolangParser.MethodDeclContext): Unit = {
-          if (ctx.IDENTIFIER() != null)
-            tokens += tokenToModel(ctx.IDENTIFIER().getSymbol, "method")
-        }
-
-        override def enterVarDecl(ctx: GolangParser.VarDeclContext): Unit = {
-          ctx
-            .varSpec()
-            .forEach((x) => {
-              if (x.identifierList() != null)
-                x.identifierList()
-                  .IDENTIFIER()
-                  .forEach((i) => {
-                    tokens += tokenToModel(i.getSymbol, "variable")
-                  })
-            })
-        }
-
-        override def enterFieldDecl(ctx: GolangParser.FieldDeclContext) {
-          if (ctx.identifierList() != null)
-            ctx.identifierList().IDENTIFIER().forEach((i) => tokens += tokenToModel(i.getSymbol, "field"))
-        }
-
-      },
-      parser.sourceFile()
-    )
-
-    tokens.toList
-  }
-
-  override def parse(content: String): List[TokenModel] = {
-    val lexer = new GolangLexer(new ANTLRInputStream(content))
-    //lexer.setInterpreter(
-     // new LexerATNSimulator(lexer, lexer.getATN, lexer.getInterpreter.decisionToDFA, new PredictionContextCache))
-    extractTokens(lexer)
-  }
+      )
+      f.delete()
+      tokens.toList
+    }
 }

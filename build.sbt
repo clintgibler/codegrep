@@ -20,7 +20,6 @@ libraryDependencies ++= Seq(
 ).map(_ % circeVersion)
 
 libraryDependencies += ws
-libraryDependencies += "org.antlr" % "antlr4" % "4.7.1"
 libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.12.6"
 
 libraryDependencies += "org.eclipse.platform" % "org.eclipse.equinox.app" % "1.3.500"

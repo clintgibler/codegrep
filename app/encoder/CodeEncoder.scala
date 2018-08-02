@@ -76,7 +76,7 @@ object CodeEncoder {
                               source.repository,
                               source.content,
                               "go",
-                              GolangCodeEncoder.parse(source.content)))
+                              GolangCodeEncoder.parse(source.content, "." + fileType)))
             case "scala" =>
               Right(
                 new CodeModel(source.id,
