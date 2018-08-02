@@ -63,14 +63,21 @@ class SearchDataSourceElasticsearch(client: HttpClient)(implicit ec: ExecutionCo
       }
   }
 
-  override def getDocumentByTerm(queryString: Map[String, Seq[String]]): Future[Either[SearchDataSourceError, Seq[SearchResultModel]]] = {
+  override def getDocumentByTerm(
+      queryString: Map[String, Seq[String]]): Future[Either[SearchDataSourceError, Seq[SearchResultModel]]] = {
+
+    def highlightFromContent(hit: SearchHit): String = {
+      val content = hit.sourceField("content").toString
+      val tokens = hit.sourceField("tokens")
+      Logger.debug(tokens.toString)
+      ""
+    }
 
     def makeHighlight(hit: SearchHit, highlightTerm: String): String = {
       if (hit.highlight != null && hit.highlight.contains("content")) {
         hit.highlight("content").mkString
       } else {
-        Logger.debug(hit.sourceField("tokens").toString)
-        hit.sourceField("content").toString.slice(0, 600)
+        highlightFromContent(hit)
       }
     }
 
