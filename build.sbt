@@ -1,7 +1,7 @@
 name := """codegrep"""
 organization := "in.syam"
 
-version := "1.8-SNAPSHOT"
+version := "1.9-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
