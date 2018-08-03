@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export GIT_TERMINAL_PROMPT=0
+
 data="/home/codegrep/data"
 sourcedir="$data/sources/github.com"
 repolist="$data/github-sources.txt"
