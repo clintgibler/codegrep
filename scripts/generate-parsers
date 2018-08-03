@@ -1,8 +1,0 @@
-#!/bin/bash
-
-cd grammars-v4 || exit
-
-for grammar in "c" "cpp" "golang" "java" "scala"
-do
-  java -jar /Users/syam/.ivy2/cache/com.tunnelvisionlabs/antlr4/jars/antlr4-4.7.1.jar  -package parsers.$grammar -lib $grammar -o ../app/parsers/$grammar -Xexact-output-dir $grammar/*.g4
-done

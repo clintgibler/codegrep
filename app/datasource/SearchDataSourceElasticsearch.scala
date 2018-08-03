@@ -66,28 +66,55 @@ class SearchDataSourceElasticsearch(client: HttpClient)(implicit ec: ExecutionCo
   override def getDocumentByTerm(
       queryString: Map[String, Seq[String]]): Future[Either[SearchDataSourceError, Seq[SearchResultModel]]] = {
 
-    def highlightFromContent(hit: SearchHit): String = {
-      val content = hit.sourceField("content").toString
-      val tokens = hit.sourceField("tokens")
-      Logger.debug(tokens.toString)
-      ""
+    //TODO: Use char position to highlight - needs different treatment based on whether the offsets are
+    //from clang and golang(byte offsets) vs scala and java which are char offsets
+    def highlightFromContent(hit: SearchHit, highlightTerm: String, highlightTermType: String): String = {
+      var highlight = hit.sourceField("content").toString.substring(0, 300)
+      val content = hit.sourceField("content").toString.split('\n').toList
+      val tokens = hit.sourceField("tokens").asInstanceOf[List[Map[String, Any]]]
+      tokens.foreach(f = (m) => {
+        val model = TokenModel(
+          m("text").asInstanceOf[String],
+          m("line").asInstanceOf[Int],
+          m("char").asInstanceOf[Int],
+          m("type").asInstanceOf[String]
+        )
+        if (model.text == highlightTerm && model.tokenType == highlightTermType) {
+          val line = model.line - 1
+          if (content.length > line) {
+            highlight = content(model.line - 1) // line is 1-indexed
+            highlight = highlight.replaceAll(highlightTerm, "<em>" + highlightTerm + "</em>")
+
+            val from = if (line - 5 > 0) line - 5 else 0
+            val end = if (line + 5 < content.length) line + 5 else content.length - 1
+
+            var highlightContext = content.slice(from, line - 1)
+            highlightContext ::= highlight
+            highlightContext ++= content.slice(line + 1, end)
+            highlight = highlightContext.mkString("\n")
+          }
+        }
+      })
+      highlight
     }
 
-    def makeHighlight(hit: SearchHit, highlightTerm: String): String = {
+    def makeHighlight(hit: SearchHit, highlightTerm: String, highlightTermType: String): String = {
       if (hit.highlight != null && hit.highlight.contains("content")) {
         hit.highlight("content").mkString
       } else {
-        highlightFromContent(hit)
+        highlightFromContent(hit, highlightTerm, highlightTermType)
       }
     }
 
-    def hitToSearchDocumentModel(hit: SearchHit, highlightTerm: String): SearchResultModel = {
+    def hitToSearchDocumentModel(hit: SearchHit,
+                                 highlightTerm: String,
+                                 highlightTermType: String): SearchResultModel = {
       SearchResultModel(
         id = hit.id,
         filename = hit.sourceField("filename").toString,
         repository = hit.sourceField("repository").toString,
         content = hit.sourceField("content").toString,
-        highlight = makeHighlight(hit, highlightTerm)
+        highlight = makeHighlight(hit, highlightTerm, highlightTermType)
       )
     }
 
@@ -97,6 +124,7 @@ class SearchDataSourceElasticsearch(client: HttpClient)(implicit ec: ExecutionCo
     var nestedQueries: List[QueryDefinition] = List()
     var nested = nestedQuery("tokens")
     var highlightTerm = "content"
+    var highlightTermType = ""
 
     queryString.foreach {
       case (k, v) =>
@@ -115,9 +143,10 @@ class SearchDataSourceElasticsearch(client: HttpClient)(implicit ec: ExecutionCo
                 )
                 .minimumShouldMatch(1) :: queries
           case "tokens.text" =>
+            highlightTerm = v.mkString
             nestedQueries = termQuery(k, v.mkString) :: nestedQueries
           case "tokens.type" =>
-            highlightTerm = v.mkString
+            highlightTermType = v.mkString
             nestedQueries = termQuery(k, v.mkString) :: nestedQueries
           case _ =>
         }
@@ -130,7 +159,8 @@ class SearchDataSourceElasticsearch(client: HttpClient)(implicit ec: ExecutionCo
       }
       .map {
         case Left(failure) => Left(SearchDataSourceError.OperationFailed(failure.toString))
-        case Right(data)   => Right(data.result.hits.hits.map((hit) => hitToSearchDocumentModel(hit, highlightTerm)))
+        case Right(data) =>
+          Right(data.result.hits.hits.map((hit) => hitToSearchDocumentModel(hit, highlightTerm, highlightTermType)))
       }
   }
 

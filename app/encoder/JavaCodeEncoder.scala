@@ -2,6 +2,7 @@ package encoder
 
 import models.TokenModel
 import org.eclipse.jdt.core.dom._
+import play.api.Logger
 
 object JavaCodeEncoder {
 
