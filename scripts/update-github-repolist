@@ -2,10 +2,10 @@
 
 tempfoo=`basename $0`
 TMPFILE=`mktemp /tmp/${tempfoo}.XXXXXX` || exit 1
-authtoken=$(cat /secrets/github-authtoken)
-for lang in java go ruby
+authtoken=$(cat /home/codegrep/secrets/github-authtoken)
+for lang in java scala go c c++
 	do
-	url="https://api.github.com/search/repositories?q=stars:%3E2000%20language:${lang}&sort=stars&order=desc&per_page=100"
+	url="https://api.github.com/search/repositories?q=stars:%3E1000%20language:${lang}&sort=stars&order=desc&per_page=100"
 	pagedetails=`mktemp /tmp/pagedetails.XXXXX`
 	curl -v -H "Authorization: token $authtoken" $url 2>$pagedetails  | grep clone_url | perl -lan -e '$F[1] =~ s/[",]//g; print $F[1]' >> $TMPFILE
 	grep Link: $pagedetails
@@ -18,5 +18,4 @@ for lang in java go ruby
 	done
 	fi
 done
-cat $TMPFILE
-mv $TMPFILE /data/github-top2k.txt
+mv $TMPFILE /home/codegrep/data/github-sources.txt
