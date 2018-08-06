@@ -130,7 +130,9 @@ class SearchDataSourceElasticsearch(client: HttpClient)(implicit ec: ExecutionCo
       case (k, v) =>
         k match {
           case "content" =>
-            queries = termQuery("content", v.mkString.toLowerCase()) :: queries
+            v.mkString.split("\\s+").foreach( part =>
+              queries = termQuery("content", part.toLowerCase()) :: queries
+            )
           case "language" => queries = termQuery("language", v.mkString.toLowerCase()) :: queries
           // We store "repository" field both analyzed (ie tokenized on whitespace) and as exact string
           // This allows us to match both exact url or just a part of url
@@ -152,6 +154,8 @@ class SearchDataSourceElasticsearch(client: HttpClient)(implicit ec: ExecutionCo
         }
     }
     queries = nested.query(boolQuery().must(nestedQueries)) :: queries
+
+    Logger.debug("Querying elasticsearch for query: %s".format(client.show(search("codesearch").query(boolQuery().must(queries)))))
 
     client
       .execute {
