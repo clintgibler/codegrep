@@ -1,5 +1,5 @@
 ### Idea
-codesearch uses various parsers to tokenize source code files and stores the results in an elasticsearch cluster. This allows us to perform structured searches - for example - in current implementation, you can restrict searches to identifiers. (there by not matching comments etc)
+codegrep uses various parsers to tokenize source code files and stores the results in an elasticsearch cluster. This allows us to perform structured searches - for example - in current implementation, you can restrict searches to identifiers. (there by not matching comments etc)
 
 ### Development setup
 
